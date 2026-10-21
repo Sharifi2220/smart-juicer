@@ -11,7 +11,7 @@ Use the 30 case IDs in `benchmark-plan.json`. For every case, run the same promp
 
 ## Quality and token gate
 
-Each submitted trial must include an independent acceptance evidence ID, complete input/output usage, a provider-backed cost evidence source, the evidence reference, capture time, and pricing version. Token counts are not EUR costs. A missing cost or quality result remains `UNKNOWN` and disqualifies the candidate.
+Each trial requires an independent acceptance evidence ID, complete input/output token counts, and a dated usage evidence reference. The primary result is the percentage change in total input + output tokens across paired tasks. Cached input tokens are already within input tokens. Price records are optional and do not affect this metric. Missing token usage or quality blocks the candidate.
 
 The local gate is exposed by `assessIndependentB0B1` in `benchmark.ts`. It requires at least 30 complete, internally consistent pairs, rejects any malformed, duplicate, or unpaired extra trial, checks that B0 has no model override and B1 uses the declared candidate model, and rejects quality regressions. It always returns `safeForAutomaticRouting: false`. Imported `independent` labels are still claims; the gate does not authenticate a reviewer or invoice.
 
