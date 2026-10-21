@@ -1,0 +1,43 @@
+{
+  "schema_version": "v0.2-shadow",
+  "sourceTrust": "explicit_user_import",
+  "privacyMode": "metadata_only",
+  "records": [
+    {
+      "id": "synthetic-css",
+      "model": "gpt-5.6-sol",
+      "thinkingEffort": "medium",
+      "inputTokens": 120,
+      "cachedInputTokens": 80,
+      "outputTokens": 20,
+      "durationMs": 1200,
+      "failedAttempts": 0,
+      "qualityStatus": "PASS",
+      "status": "completed"
+    },
+    {
+      "id": "synthetic-retry",
+      "model": "gpt-5.6-sol",
+      "thinkingEffort": "medium",
+      "inputTokens": 200,
+      "cachedInputTokens": 100,
+      "outputTokens": 50,
+      "durationMs": 2400,
+      "failedAttempts": 1,
+      "qualityStatus": "PASS",
+      "status": "completed"
+    },
+    {
+      "id": "synthetic-unknown",
+      "model": null,
+      "thinkingEffort": null,
+      "inputTokens": null,
+      "cachedInputTokens": null,
+      "outputTokens": null,
+      "durationMs": null,
+      "failedAttempts": null,
+      "qualityStatus": "UNKNOWN",
+      "status": "unknown"
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "schema_version": "v0.1",
+  "sourceTrust": "user_direct",
+  "originalPrompt": "Ändere die Farbe des rein dekorativen Buttons per CSS.",
+  "fileMetadata": {
+    "totalCount": 1,
+    "extensions": [".css"],
+    "changedRelativePaths": ["styles.css"]
+  },
+  "repoSignals": {
+    "gitDirty": false,
+    "testsPresent": true
+  }
+}

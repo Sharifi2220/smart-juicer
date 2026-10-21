@@ -1,0 +1,31 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "strict": true,
+    "allowImportingTsExtensions": true,
+    "erasableSyntaxOnly": true,
+    "verbatimModuleSyntax": true,
+    "noEmit": true,
+    "skipLibCheck": true,
+    "lib": [
+      "ES2022"
+    ],
+    "types": [
+      "node"
+    ]
+  },
+  "include": [
+    "observer.ts",
+    "cli.ts",
+    "path-policy.ts",
+    "inspector.ts",
+    "codex-wrapper.ts",
+    "quality-verifier.ts",
+    "benchmark.ts",
+    "sj-dev-cli.ts",
+    "sj-local.ts",
+    "shadow-mode.ts"
+  ]
+}

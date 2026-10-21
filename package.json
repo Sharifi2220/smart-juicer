@@ -1,0 +1,25 @@
+{
+  "name": "smart-juicer",
+  "private": true,
+  "version": "0.2.0-alpha.1",
+  "type": "module",
+  "engines": {
+    "node": ">=24.0.0"
+  },
+  "scripts": {
+    "test": "node --test observer.test.mjs inspector.test.mjs shadow-mode.test.mjs",
+    "check": "node ./node_modules/typescript/bin/tsc --noEmit -p tsconfig.json",
+    "observe": "node cli.ts",
+    "doctor": "node sj-dev-cli.ts doctor",
+    "inspect": "node sj-dev-cli.ts inspect",
+    "plan": "node sj-dev-cli.ts plan",
+    "verify": "node sj-dev-cli.ts verify",
+    "stats": "node sj-dev-cli.ts stats",
+    "local": "node sj-local.ts",
+    "shadow-demo": "node sj-local.ts --shadow-demo"
+  },
+  "devDependencies": {
+    "@types/node": "22.15.0",
+    "typescript": "5.8.3"
+  }
+}
