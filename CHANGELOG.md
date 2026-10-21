@@ -2,6 +2,18 @@
 
 All notable changes to this alpha release are documented here.
 
+## 0.2.0-alpha.2 — unreleased
+
+### Added
+
+- Explicit, separately gated Codex execution adapter with exact B1 model/effort selection, clean-worktree recheck, bounded stdin/JSONL handling, and no raw event output.
+- Independent B0/B1 benchmark plan and conservative provider-cost/quality gate for 30 paired cases.
+
+### Limits
+
+- The execution adapter is disabled by default and has not started a model run.
+- No real benchmark cost data, accepted quality corpus, savings result, or production authorization is included.
+
 ## 0.2.0-alpha.1 — 2026-10-21
 
 ### Added
@@ -19,3 +31,4 @@ All notable changes to this alpha release are documented here.
 ### Limits
 
 - Active routing, autonomous agent execution, cost/token guarantees, production security guarantees, and independently verified quality optimization remain out of scope.
+

@@ -28,6 +28,9 @@
     "sj-local.ts",
     "shadow-mode.ts",
     "routing-policy.ts",
-    "routing-cli.ts"
+    "routing-cli.ts",
+    "codex-executor.ts",
+    "codex-exec-cli.ts"
   ]
 }
+

@@ -68,3 +68,10 @@ The returned `claimedSavingsPercent` is arithmetic over **imported claims**, not
 5. Only claim measured savings for a dated, documented evaluation with sample size, accepted-task rate, uncertainty, costs and complete run provenance. Do not extrapolate a synthetic test dataset into production ROI.
 
 No synthetic routing fixture or passing unit test can substitute for these prerequisites.
+
+## Explicit execution adapter (not enabled by routing)
+
+The implementation now includes `codex-executor.ts` and the `execute` npm script. The adapter is deliberately not called by `routing-policy.ts`: a B1 run needs an exact operator-supplied model ID and effort, a matching unexpired approval, an explicitly marked isolated clean Git worktree, and `SMART_JUICER_EXECUTE=1`. It invokes `codex exec --json --ephemeral --ignore-user-config` with `--model` only for B1, `--sandbox read-only` or `workspace-write`, and `--ask-for-approval on-request`.
+
+The adapter performs a final read-only scope check immediately before spawning Codex, bounds prompt size, runtime and JSONL output, and never places the prompt in process arguments or returns raw event text. Provider entitlement and billing are not inferred; `billingCostEur` remains `null`. No test or smoke command enables the execution opt-in.
+

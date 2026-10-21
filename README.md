@@ -128,6 +128,16 @@ npm run route -- path/to/explicit-routing-evidence.json
 
 Requires at least 30 independent-review-claimed B0/B1 pairs with complete prices and no accepted-quality regression. Missing or ambiguous evidence defaults to native Codex settings. Reported savings are **unverified input claims**; no production savings or active model execution is implied. See [Routing Pilot](docs/ROUTING-PILOT.md).
 
+## Explicit execution adapter
+
+The repository contains a separate `codex-executor.ts` integration for a future, explicitly approved pilot. It is not called by routing. B1 requires an exact model ID and effort in a matching unexpired approval document; B0 explicitly forbids model and effort overrides. Both arms require a clean, isolated Git worktree. The CLI also requires `SMART_JUICER_EXECUTE=1`.
+
+The adapter passes the prompt through stdin, uses `codex exec --json --ephemeral --ignore-user-config`, requests `--ask-for-approval on-request`, applies a bounded read-only or workspace-write sandbox, performs a final scope recheck, and does not return raw event text. It does not authenticate entitlement or billing; `billingCostEur` remains unknown. Do not enable it without separate host, quality, privacy, and budget approval.
+
+## Benchmark preparation
+
+`benchmark-plan.json` defines 30 neutral case IDs for paired B0/B1 runs. `docs/BENCHMARK-PLAN.md` and `assessIndependentB0B1` define the independent acceptance, provider-backed cost, usage-completeness, and no-regression gates. The plan contains no real prompts or cost records and is not a savings result.
+
 ## Development
 
 ```text
@@ -140,3 +150,4 @@ The CI workflow runs both commands on Ubuntu and Windows with Node.js 24.
 ## License
 
 This project is licensed under the Mozilla Public License 2.0 (MPL-2.0). See [LICENSE](LICENSE) for the unmodified license text.
+

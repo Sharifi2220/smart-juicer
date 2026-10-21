@@ -1,0 +1,55 @@
+{
+  "schema_version": "v0.4-benchmark-plan",
+  "status": "prepared_not_run",
+  "min_pairs": 30,
+  "max_pairs_before_review": 50,
+  "arms": ["B0", "B1"],
+  "task_classes": ["ui", "documentation", "development"],
+  "privacy": "Prompts, repository contents, account identifiers and billing exports stay in the private Research-Lab workspace; this public plan contains only neutral case identifiers and acceptance dimensions.",
+  "cost_policy": {
+    "required_evidence": ["provider_invoice", "provider_billing_export", "provider_usage_export"],
+    "token_counts_are_not_eur_cost": true,
+    "missing_cost_is_unknown": true,
+    "paid_inference_requires_separate_budget_approval": true
+  },
+  "quality_policy": {
+    "review": "independent",
+    "both_arms_must_be_accepted": true,
+    "quality_regression_disqualifies_candidate": true,
+    "same_prompt_scope_and_acceptance_contract": true,
+    "blind_review_recommended": true
+  },
+  "cases": [
+    {"pairId":"case-001","taskClass":"ui","acceptance":"single-style-change-and-targeted-test"},
+    {"pairId":"case-002","taskClass":"ui","acceptance":"responsive-layout-adjustment-and-existing-tests"},
+    {"pairId":"case-003","taskClass":"ui","acceptance":"accessible-label-change-and-check"},
+    {"pairId":"case-004","taskClass":"ui","acceptance":"form-validation-message-and-test"},
+    {"pairId":"case-005","taskClass":"ui","acceptance":"component-state-style-change-and-test"},
+    {"pairId":"case-006","taskClass":"ui","acceptance":"keyboard-focus-style-and-accessibility-check"},
+    {"pairId":"case-007","taskClass":"ui","acceptance":"table-spacing-change-and-snapshot-check"},
+    {"pairId":"case-008","taskClass":"ui","acceptance":"mobile-breakpoint-fix-and-regression-check"},
+    {"pairId":"case-009","taskClass":"ui","acceptance":"empty-state-copy-layout-and-test"},
+    {"pairId":"case-010","taskClass":"ui","acceptance":"loading-state-indicator-and-test"},
+    {"pairId":"case-011","taskClass":"documentation","acceptance":"readme-clarification-and-link-check"},
+    {"pairId":"case-012","taskClass":"documentation","acceptance":"api-example-update-and-code-fence-check"},
+    {"pairId":"case-013","taskClass":"documentation","acceptance":"changelog-entry-and-format-check"},
+    {"pairId":"case-014","taskClass":"documentation","acceptance":"architecture-section-and-link-check"},
+    {"pairId":"case-015","taskClass":"documentation","acceptance":"migration-note-and-consistency-check"},
+    {"pairId":"case-016","taskClass":"documentation","acceptance":"security-note-and-sensitive-data-check"},
+    {"pairId":"case-017","taskClass":"documentation","acceptance":"developer-guide-example-and-command-check"},
+    {"pairId":"case-018","taskClass":"documentation","acceptance":"release-note-draft-and-version-check"},
+    {"pairId":"case-019","taskClass":"documentation","acceptance":"configuration-reference-and-schema-check"},
+    {"pairId":"case-020","taskClass":"documentation","acceptance":"troubleshooting-entry-and-link-check"},
+    {"pairId":"case-021","taskClass":"development","acceptance":"pure-helper-change-and-unit-test"},
+    {"pairId":"case-022","taskClass":"development","acceptance":"parser-edge-case-and-regression-test"},
+    {"pairId":"case-023","taskClass":"development","acceptance":"typed-option-addition-and-typecheck"},
+    {"pairId":"case-024","taskClass":"development","acceptance":"error-path-hardening-and-test"},
+    {"pairId":"case-025","taskClass":"development","acceptance":"small-refactor-with-no-behavior-change"},
+    {"pairId":"case-026","taskClass":"development","acceptance":"cli-argument-validation-and-test"},
+    {"pairId":"case-027","taskClass":"development","acceptance":"deterministic-json-output-and-test"},
+    {"pairId":"case-028","taskClass":"development","acceptance":"filesystem-scope-check-and-adversarial-test"},
+    {"pairId":"case-029","taskClass":"development","acceptance":"dependency-version-update-and-ci-check"},
+    {"pairId":"case-030","taskClass":"development","acceptance":"test-fixture-repair-and-full-suite"}
+  ]
+}
+
