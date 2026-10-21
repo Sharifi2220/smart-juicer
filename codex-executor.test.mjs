@@ -2,7 +2,9 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { buildCodexCommand, validateExecutionRequest } from './codex-executor.ts';
 
-const root = 'C:\\tmp\\smart-juicer-disposable-worktree';
+const root = process.platform === 'win32'
+  ? 'C:\\tmp\\smart-juicer-disposable-worktree'
+  : '/tmp/smart-juicer-disposable-worktree';
 function approval(overrides = {}) {
   return {
     enabled: true,
