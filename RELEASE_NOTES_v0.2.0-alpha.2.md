@@ -16,3 +16,8 @@ The 30-case plan is prepared but not run. No paid inference, real prompt export,
 
 `npm ci`, `npm test`, `npm run check`, observer/route/doctor/plan/shadow/starter smoke tests, and the executor's no-opt-in fail-closed check are required before tagging. GitHub CI and the final release tag must be verified on the resulting commit before publication.
 
+
+
+## Post-review security clarifications
+
+The adapter requires a separately host-pinned `SMART_JUICER_APPROVED_ROOT` as well as the explicit execute opt-in, and validates linked Git worktree metadata before spawn. The benchmark gate rejects extra, malformed or unpaired trials and cross-model substitution. This is an experimental pre-release: **budgetEur does not cap real provider spend**, no host sandbox has been certified, and no real inference or savings result is available. Merge and tag remain subject to human review.
