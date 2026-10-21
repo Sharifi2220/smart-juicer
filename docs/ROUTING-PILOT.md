@@ -75,3 +75,6 @@ The implementation now includes `codex-executor.ts` and the `execute` npm script
 
 The adapter performs a final read-only scope check immediately before spawning Codex, bounds prompt size, runtime and JSONL output, and never places the prompt in process arguments or returns raw event text. Provider entitlement and billing are not inferred; `billingCostEur` remains `null`. No test or smoke command enables the execution opt-in.
 
+
+
+The host must independently set `SMART_JUICER_APPROVED_ROOT` to the canonical linked Git worktree; JSON permission fields alone are never an authorization. The executor checks the separate host env flag, root identity, and Git worktree metadata before spawning. These checks are snapshots and cannot replace process-tree isolation, anti-TOCTOU protections, OS permission enforcement, or secret controls. `budgetEur` is not spent or enforced by provider billing telemetry; separate live spend controls are mandatory before paid pilots. Because the adapter uses `--ignore-user-config`, B0 is a controlled non-interactive CLI baseline, not necessarily the exact settings of normal interactive Codex.
