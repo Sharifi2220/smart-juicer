@@ -34,4 +34,4 @@ Include the OS, Node version, exact command, minimal synthetic reproduction, exp
 
 ## Release process
 
-After any change to a tagged release: update documentation, commit, deliberately retarget the pre-release tag, and validate reproducibility. Create releases from the reviewed staging only; push checked source, verify GitHub Actions on Ubuntu and Windows, and publish a pre-release only after a genuinely green workflow. Preserve the actual commit SHA and immutable release URL.
+Never retarget or overwrite an existing published release tag. Prepare changes in a reviewed PR; run locked dependency installation, tests and TypeScript checks on Windows and Ubuntu. Publish a **new** immutable version tag at the reviewed commit only after the release workflow re-runs tests. Confirm the tag target, release notes and prerelease status via the GitHub API. No npm publication occurs.
