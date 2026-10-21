@@ -20,7 +20,7 @@ This is an honest, limited GitHub alpha. It is not production-ready and does not
 ## What this alpha does not do
 
 - It does not start Codex or another coding agent.
-- It does not route tasks, choose a model, change effort, or alter native configuration.
+- It does not automatically execute a model choice, change effort, or alter native configuration. Experimental candidate suggestions require manual review and never invoke Codex.
 - It does not read live sessions, discover queues, or collect prompts, credentials, or raw logs.
 - It does not guarantee token, cost, latency, or quality improvements.
 - It does not provide a production security boundary, sandbox, authorization system, or TOCTOU protection.
