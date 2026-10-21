@@ -50,6 +50,8 @@ The test suite is local and synthetic. It does not make paid model calls.
 - [Developer Guide](docs/DEVELOPER-GUIDE.md)
 - [Evidence-gated routing pilot](docs/ROUTING-PILOT.md)
 - [Paired token benchmark and quality gate](docs/BENCHMARK-PLAN.md)
+- [Automatic model selection plan (offline, signed-evidence gated)](docs/AUTO-MODEL-SELECTION.md)
+- [Expert literature and proposed independent review team](docs/EXPERT-REVIEW-TEAM.md)
 - [Research-backed measurement and evaluation](docs/RESEARCH-AND-EVALUATION.md)
 - [Contributing](CONTRIBUTING.md)
 - [Security policy](SECURITY.md)
@@ -129,6 +131,12 @@ npm run route -- path/to/explicit-routing-evidence.json
 ```
 
 Requires at least 30 independently reviewed (as imported metadata claims) B0/B1 pairs with complete input and output token counts and matching quality acceptance. Reports **claimedTokenSavingsPercent**, the percentage reduction in input + output token volume. Cached input is not counted twice. A model needs at least 15% reduction for advisory review. Pricing data is not part of this metric. No real savings or agent execution is implied. See [Routing Pilot](docs/ROUTING-PILOT.md).
+
+## Experimental automatic model selection PLAN (main branch)
+
+`npm run auto-plan -- path/to/local-request.json` evaluates an **offline model-selection plan**. It only selects a candidate model in JSON if a host-pinned Ed25519 signing key validates the entire evaluation dataset, the candidate is on the host allowlist, the Git commit and task class match, the evidence is fresh, and sufficient quality/usage and token-efficiency criteria pass. Missing or untrusted evidence means `KEEP_NATIVE_DEFAULT`.
+
+This is **not automatic model execution**. The planner cannot invoke Codex, change interactive model settings, authenticate model entitlement, or certify independent acceptance simply because a trusted issuer signed imported data. Its `autoExecute` output is always `false`. See [Automatic model selection](docs/AUTO-MODEL-SELECTION.md) for the host-key setup, limitations and staged rollout. This newer development feature is available in `main`, not in the historical tagged `v0.2.0-alpha.2` release.
 
 ## Explicit execution adapter
 
