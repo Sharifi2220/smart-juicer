@@ -5,7 +5,7 @@
  */
 import { observeTask } from './observer.ts';
 
-export const ROUTE_SCHEMA = 'v0.3-route-pilot' as const;
+export const ROUTE_SCHEMA = 'v0.4-token-route' as const;
 export type RouteClass = 'ui' | 'documentation' | 'development';
 export type RouteArm = 'B0' | 'B1';
 
@@ -16,7 +16,10 @@ export interface RouteTrial {
   readonly modelId: string | null;
   readonly accepted: boolean | null;
   readonly review: 'independent' | 'self_reported' | 'unknown';
-  readonly costEur: number | null;
+  readonly inputTokens: number | null;
+  readonly outputTokens: number | null;
+  /** Included in inputTokens; never add a second time. */
+  readonly cachedInputTokens?: number | null;
 }
 
 export interface RouteInput {
@@ -36,7 +39,8 @@ export interface RouteResult {
   readonly taskClass: RouteClass | null;
   readonly risk: string;
   readonly pairedFixtures: number;
-  readonly claimedSavingsPercent: number | null;
+  /** Percentage of imported B0 versus B1 input + output token totals. */
+  readonly claimedTokenSavingsPercent: number | null;
   readonly reasonCode: string;
 }
 
@@ -46,7 +50,7 @@ const ARMS: readonly string[] = ['B0', 'B1'];
 const REVIEWS: readonly string[] = ['independent', 'self_reported', 'unknown'];
 const MAX_TRIALS = 10000;
 const MIN_PAIRS = 30;
-const MIN_REDUCTION = 0.15;
+const MIN_TOKEN_REDUCTION = 0.15;
 
 function object(x: unknown): x is Record<string, unknown> {
   return x !== null && typeof x === 'object' && !Array.isArray(x);
@@ -60,7 +64,11 @@ function parseTrials(raw: unknown): RouteTrial[] {
         !CLASSES.includes(item.taskClass as string) || !ARMS.includes(item.arm as string) ||
         !REVIEWS.includes(item.review as string) ||
         !(item.accepted === null || typeof item.accepted === 'boolean') ||
-        !(item.costEur === null || (typeof item.costEur === 'number' && Number.isFinite(item.costEur) && item.costEur >= 0)) ||
+        !(item.inputTokens === null || (typeof item.inputTokens === 'number' && Number.isSafeInteger(item.inputTokens) && item.inputTokens >= 0)) ||
+        !(item.outputTokens === null || (typeof item.outputTokens === 'number' && Number.isSafeInteger(item.outputTokens) && item.outputTokens >= 0)) ||
+        !(item.cachedInputTokens === undefined || item.cachedInputTokens === null ||
+          (typeof item.cachedInputTokens === 'number' && Number.isSafeInteger(item.cachedInputTokens) &&
+           item.cachedInputTokens >= 0 && item.inputTokens !== null && item.cachedInputTokens <= item.inputTokens)) ||
         !(item.modelId === null || (typeof item.modelId === 'string' && MODEL_ID.test(item.modelId)))) {
       throw new TypeError('INVALID_ROUTE_TRIAL');
     }
@@ -72,13 +80,13 @@ function parseTrials(raw: unknown): RouteTrial[] {
 }
 
 function result(risk: string, taskClass: RouteClass | null, reasonCode: string, pairedFixtures = 0,
-                claimedSavingsPercent: number | null = null, suggestedModel: string | null = null): RouteResult {
+                claimedTokenSavingsPercent: number | null = null, suggestedModel: string | null = null): RouteResult {
   return Object.freeze({
     schema_version: ROUTE_SCHEMA,
     action: suggestedModel ? 'CANDIDATE_REQUIRES_REVIEW' : 'KEEP_NATIVE_DEFAULT',
     suggestedModel, autoExecute: false, modelEntitlementVerified: false,
     independentEvidenceAuthenticated: false, taskClass, risk, pairedFixtures,
-    claimedSavingsPercent, reasonCode
+    claimedTokenSavingsPercent, reasonCode
   });
 }
 
@@ -104,8 +112,8 @@ export function recommendModel(raw: unknown): RouteResult {
     grouped.set(trial.fixtureId, group);
   }
   if (grouped.size < MIN_PAIRS) return result(obs.risk_level, taskClass, 'INSUFFICIENT_PAIRED_FIXTURES', grouped.size);
-  let baselineCost = 0;
-  let candidateCost = 0;
+  let baselineTokens = 0;
+  let candidateTokens = 0;
   for (const pair of grouped.values()) {
     const b = pair.B0, c = pair.B1;
     if (!b || !c || b.modelId !== null || c.modelId !== raw.candidateModel) {
@@ -113,22 +121,23 @@ export function recommendModel(raw: unknown): RouteResult {
     }
     if (b.review !== 'independent' || c.review !== 'independent' ||
         b.accepted !== true || c.accepted !== true ||
-        b.costEur === null || c.costEur === null) {
-      return result(obs.risk_level, taskClass, 'MISSING_INDEPENDENT_QUALITY_OR_COST', grouped.size);
+        b.inputTokens === null || c.inputTokens === null ||
+        b.outputTokens === null || c.outputTokens === null) {
+      return result(obs.risk_level, taskClass, 'MISSING_INDEPENDENT_QUALITY_OR_TOKEN_USAGE', grouped.size);
     }
-    baselineCost += b.costEur;
-    candidateCost += c.costEur;
+    baselineTokens += b.inputTokens + b.outputTokens;
+    candidateTokens += c.inputTokens + c.outputTokens;
   }
-  if (baselineCost <= 0 || !Number.isFinite(baselineCost) || !Number.isFinite(candidateCost)) {
-    return result(obs.risk_level, taskClass, 'INVALID_BASELINE_COST', grouped.size);
+  if (baselineTokens <= 0 || !Number.isSafeInteger(baselineTokens) || !Number.isSafeInteger(candidateTokens)) {
+    return result(obs.risk_level, taskClass, 'INVALID_BASELINE_TOKENS', grouped.size);
   }
-  const reduction = 1 - candidateCost / baselineCost;
+  const reduction = 1 - candidateTokens / baselineTokens;
   const percentage = Math.round(reduction * 10000) / 100;
-  if (reduction + Number.EPSILON < MIN_REDUCTION) {
+  if (reduction + Number.EPSILON < MIN_TOKEN_REDUCTION) {
     return result(obs.risk_level, taskClass, 'NO_MEANINGFUL_SAVINGS', grouped.size, percentage);
   }
-  // The claimed saving is based on caller-supplied pricing and review flags.
-  // No live entitlement, billing statement, or independent fixture acceptance is verified here.
+  // This is a token-volume comparison, NOT an EUR cost or a quality claim.
+  // Imported usage and independent-review labels are not authenticated here.
   return result(obs.risk_level, taskClass, 'IMPORTED_EVIDENCE_CANDIDATE_ONLY',
                 grouped.size, percentage, raw.candidateModel);
 }
