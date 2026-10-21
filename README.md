@@ -134,6 +134,9 @@ The repository contains a separate `codex-executor.ts` integration for a future,
 
 The adapter passes the prompt through stdin, uses `codex exec --json --ephemeral --ignore-user-config`, requests `--ask-for-approval on-request`, applies a bounded read-only or workspace-write sandbox, performs a final scope recheck, and does not return raw event text. It does not authenticate entitlement or billing; `billingCostEur` remains unknown. Do not enable it without separate host, quality, privacy, and budget approval.
 
+Before an explicit pilot run, the trusted host must also set `SMART_JUICER_APPROVED_ROOT` to the canonical linked Git worktree directory. A normal checkout, submodule, or an isolated-worktree flag supplied only in JSON is insufficient. `budgetEur` is **approval metadata only**, **not an enforced billing cap**: the adapter cannot stop a running inference on actual provider expenditure. Do not use real inference without separate operator-controlled billing limits, host security review, and an authorized budget. The B0 arm is a *controlled CLI baseline* because `--ignore-user-config` is used; it is not necessarily equivalent to the user's normal interactive Codex setup.
+
+
 ## Benchmark preparation
 
 `benchmark-plan.json` defines 30 neutral case IDs for paired B0/B1 runs. `docs/BENCHMARK-PLAN.md` and `assessIndependentB0B1` define the independent acceptance, provider-backed cost, usage-completeness, and no-regression gates. The plan contains no real prompts or cost records and is not a savings result.
