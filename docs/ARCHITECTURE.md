@@ -34,3 +34,7 @@ An execution-capable version would require a separate host-enforced least-privil
 
 
 Executor scope correction: `SMART_JUICER_EXECUTE=1` **and** host-supplied `SMART_JUICER_APPROVED_ROOT` are mandatory in the executor itself, distinct from JSON approval claims. The selected root must be a genuine linked Git worktree. This still does not enforce an EUR spending cap or establish an OS-level containment boundary; `budgetEur` is metadata only. Do not call the adapter production-safe or execute paid inference before host-side enforcement and explicit budget approval.
+
+## Automatic model selection planning
+
+The optional offline planner authenticates the issuer signature, checks host-provided policy and quality/usage evidence, then returns a nonexecuting recommendation. It is disconnected from Codex execution and cannot authorize repository writes. Refer to [selection design](AUTO-MODEL-SELECTION.md) and [review roles](EXPERT-REVIEW-TEAM.md).
