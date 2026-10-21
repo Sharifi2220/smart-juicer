@@ -1,23 +1,39 @@
-# Smart Juicer v0.2.0-alpha.2 — release candidate preparation
+# Smart Juicer v0.2.0-alpha.2
 
-## Scope
+**Experimental GitHub pre-release.** No npm package is published. This release is source-only and not intended for unattended or production deployment.
 
-This candidate adds a separately gated Codex execution adapter and prepares an independent B0/B1 benchmark workflow. The public routing policy remains advisory and cannot invoke the adapter or change a model.
+## Included
 
-## Safety boundary
+- Local, nonexecuting task analysis, metadata-only passive Shadow Mode, and read-only diagnostic commands.
+- **Advisory-only** B0/B1 candidate comparison based on the percentage reduction in aggregate input + output tokens. Cached input is counted once; currency prices are not part of this metric.
+- Independent-quality-claimed 30-pair benchmark plan and conservative usage completeness gate. The 15% saving threshold only admits a candidate for **manual review**.
+- A **separate**, **disabled-by-default** experimental Codex execution adapter. It requires `SMART_JUICER_EXECUTE=1`, a host-pinned `SMART_JUICER_APPROVED_ROOT`, a verified linked Git worktree, a fresh explicit request approval, an explicit B1 model and effort, and time/output bounds. Routing never invokes it.
+- Windows and Ubuntu Node.js 24 test suite, TypeScript checks, developer notes and research-backed evaluation guidance.
 
-Execution is disabled by default. A run requires `SMART_JUICER_EXECUTE=1`, an explicit unexpired approval document, an exact model and effort for B1, a clean isolated Git worktree, a bounded runtime/output budget, and Codex's normal approval flow. The adapter does not bypass approvals, use danger mode, authenticate entitlements, or infer EUR costs from tokens.
+## Safety and accuracy
 
-## Benchmark boundary
+**No real token savings have been measured or independently verified.** The often-cited 30% result comes from synthetic/imported fixture data and must not be advertised as field performance. `claimedTokenSavingsPercent` is computed from imported claims, not audited provider usage. Cross-provider cache usage fields require normalization; see [Research and evaluation](docs/RESEARCH-AND-EVALUATION.md).
 
-The 30-case plan is prepared but not run. No paid inference, real prompt export, provider billing read, or verified savings claim is included. B0/B1 results remain blocked until separate budget approval, independent acceptance review, and source-labelled token usage and independent quality evidence exist. The efficiency measure is percentage of saved input + output tokens, not EUR prices.
+The adapter has not been used for paid inference. Its budget value is **not** a provider-enforced financial cap. Git-worktree inspection and Codex sandbox flags are **not** production isolation or a complete TOCTOU defense. Independent quality acceptance, live usage provenance, host privileges, model entitlement and execution budget authorization remain open. Do not point it at production repositories.
 
-## Verification performed locally
+## Quick verification
 
-`npm ci`, `npm test`, `npm run check`, observer/route/doctor/plan/shadow/starter smoke tests, and the executor's no-opt-in fail-closed check are required before tagging. GitHub CI and the final release tag must be verified on the resulting commit before publication.
+```sh
+npm ci
+npm test
+npm run check
+npm run shadow-demo
+npm run local -- --demo
+```
 
+Node.js 24 or newer is required. No paid model invocation is performed by these commands.
 
+## Further reading
 
-## Post-review security clarifications
+- [README](README.md)
+- [Developer Guide](docs/DEVELOPER-GUIDE.md)
+- [Benchmark plan](docs/BENCHMARK-PLAN.md)
+- [Research and evaluation sources](docs/RESEARCH-AND-EVALUATION.md)
+- [Security](SECURITY.md)
 
-The adapter requires a separately host-pinned `SMART_JUICER_APPROVED_ROOT` as well as the explicit execute opt-in, and validates linked Git worktree metadata before spawn. The benchmark gate rejects extra, malformed or unpaired trials and cross-model substitution. This is an experimental pre-release: **budgetEur does not cap real provider spend**, no host sandbox has been certified, and no real inference or savings result is available. Merge and tag remain subject to human review.
+The tagged source, CI result and release metadata, not an unreviewed local directory, define the published artifact.
