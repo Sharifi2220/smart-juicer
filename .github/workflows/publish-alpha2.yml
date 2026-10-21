@@ -27,6 +27,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: ${{ github.event.workflow_run.head_sha }}
+          fetch-depth: 0
           persist-credentials: false
 
       - name: Check one-shot release conditions
@@ -38,7 +39,8 @@ jobs:
           test "$(node -p "require('./package.json').version")" = "0.2.0-alpha.2"
           test -s RELEASE_NOTES_v0.2.0-alpha.2.md
           # Do not publish on unrelated future main pushes.
-          git diff-tree --no-commit-id --name-only -r HEAD | grep -Fx 'RELEASE_NOTES_v0.2.0-alpha.2.md'
+          git rev-parse HEAD^ >/dev/null
+          git diff --name-only HEAD^ HEAD | grep -Fx 'RELEASE_NOTES_v0.2.0-alpha.2.md'
           # Never move an existing tag, even if the release has not been published.
           if git ls-remote --exit-code --tags origin refs/tags/v0.2.0-alpha.2; then
             echo 'Release tag already exists: fail closed'
