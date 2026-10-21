@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { assessIndependentB0B1 } from './benchmark.ts';
 
-function records({candidateAccepted = true, missingCost = false} = {}) {
+function records({candidateAccepted = true, missingUsage = false} = {}) {
   return Array.from({ length: 30 }, (_, index) => {
     const pairId = `case-${String(index + 1).padStart(3, '0')}`;
     const common = {
@@ -16,15 +16,14 @@ function records({candidateAccepted = true, missingCost = false} = {}) {
       attempts: 1,
       review: 'independent',
       acceptanceEvidenceId: `review-${pairId}`,
-      costEvidenceSource: 'provider_billing_export',
-      costEvidenceRef: `billing-${pairId}`,
+      usageEvidenceSource: 'codex_jsonl',
+      usageEvidenceRef: `usage-${pairId}`,
       capturedAt: '2026-10-21T10:00:00Z',
-      pricingVersion: 'provider-pricing-2026-10',
       pairId
     };
     return [
-      { ...common, id: `${pairId}-b0`, arm: 'B0', modelId: null, costEur: 1 },
-      { ...common, id: `${pairId}-b1`, arm: 'B1', modelId: 'candidate-model', costEur: missingCost && index === 0 ? null : 0.7, accepted: candidateAccepted }
+      { ...common, id: `${pairId}-b0`, arm: 'B0', modelId: null, costEur: null },
+      { ...common, id: `${pairId}-b1`, arm: 'B1', modelId: 'candidate-model', inputTokens: missingUsage && index === 0 ? null : 50, costEur: null, accepted: candidateAccepted }
     ];
   }).flat();
 }
@@ -33,15 +32,20 @@ test('30 complete independent pairs pass the manual candidate gate only', () => 
   const report = assessIndependentB0B1(records(), 'candidate-model');
   assert.equal(report.pairCount, 30);
   assert.equal(report.readyForManualCandidateReview, true);
-  assert.equal(report.claimedSavingsPercent, 30);
+  assert.equal(report.claimedTokenSavingsPercent, 33.33);
+  assert.equal(report.baselineTotalTokens,4500);
+  assert.equal(report.candidateTotalTokens,3000);
   assert.equal(report.safeForAutomaticRouting, false);
 });
 
-test('missing provider cost evidence is UNKNOWN and blocks the gate', () => {
-  const report = assessIndependentB0B1(records({ missingCost: true }), 'candidate-model');
-  assert.equal(report.realCostEvidence, false);
-  assert.equal(report.readyForManualCandidateReview, false);
-  assert.ok(report.reasons.includes('REAL_COST_EVIDENCE_MISSING'));
+test('missing token usage is UNKNOWN and blocks the gate, even if price is present', () => {
+  const data=records({missingUsage:true});
+  for(const row of data) row.costEur=0.1;
+  const report=assessIndependentB0B1(data,'candidate-model');
+  assert.equal(report.usageComplete,false);
+  assert.equal(report.readyForManualCandidateReview,false);
+  assert.equal(report.claimedTokenSavingsPercent,null);
+  assert.ok(report.reasons.includes('USAGE_MISSING'));
 });
 
 test('one quality regression blocks the candidate', () => {
@@ -93,4 +97,33 @@ test('rejects duplicate arm/fixture even if 30 other pairs are complete', () => 
   const data=records();
   data.push({...data[1],id:'duplicate-arm'});
   assert.equal(assessIndependentB0B1(data,'candidate-model').readyForManualCandidateReview,false);
+});
+
+test('no EUR costs or invoices are required to report token savings',()=>{
+  const data=records();
+  for(const row of data) delete row.costEur;
+  const report=assessIndependentB0B1(data,'candidate-model');
+  assert.equal(report.readyForManualCandidateReview,true);
+  assert.equal(report.claimedTokenSavingsPercent,33.33);
+});
+test('cached input tokens do not get counted twice',()=>{
+  const data=records();
+  for(const row of data) row.cachedInputTokens=row.inputTokens;
+  const report=assessIndependentB0B1(data,'candidate-model');
+  assert.equal(report.claimedTokenSavingsPercent,33.33);
+});
+test('source label missing blocks a token measurement',()=>{
+  const data=records();
+  delete data[1].usageEvidenceRef;
+  const report=assessIndependentB0B1(data,'candidate-model');
+  assert.equal(report.readyForManualCandidateReview,false);
+  assert.ok(report.reasons.includes('REJECTED_OR_UNPAIRED_TRIALS'));
+});
+test('below 15% token reduction cannot become a candidate',()=>{
+  const data=records();
+  for(const row of data) if(row.arm==='B1')row.inputTokens=88;
+  const report=assessIndependentB0B1(data,'candidate-model');
+  assert.equal(report.claimedTokenSavingsPercent,8);
+  assert.equal(report.readyForManualCandidateReview,false);
+  assert.ok(report.reasons.includes('NO_MEANINGFUL_TOKEN_SAVINGS'));
 });
