@@ -136,6 +136,9 @@ Requires at least 30 independently reviewed (as imported metadata claims) B0/B1 
 
 `npm run auto-plan -- path/to/local-request.json` evaluates an **offline model-selection plan**. It only selects a candidate model in JSON if a host-pinned Ed25519 signing key validates the entire evaluation dataset, the candidate is on the host allowlist, the Git commit and task class match, the evidence is fresh, and sufficient quality/usage and token-efficiency criteria pass. Missing or untrusted evidence means `KEEP_NATIVE_DEFAULT`.
 
+
+Try the self-contained, no-inference demonstration with `npm run auto-plan-demo`. It generates ephemeral demo-only keys and signed **synthetic** B0/B1 pairs, returns a claimed percentage, and cannot substantiate real savings. Never reuse the demo key or dataset as trusted evaluation evidence.
+
 This is **not automatic model execution**. The planner cannot invoke Codex, change interactive model settings, authenticate model entitlement, or certify independent acceptance simply because a trusted issuer signed imported data. Its `autoExecute` output is always `false`. See [Automatic model selection](docs/AUTO-MODEL-SELECTION.md) for the host-key setup, limitations and staged rollout. This newer development feature is available in `main`, not in the historical tagged `v0.2.0-alpha.2` release.
 
 ## Explicit execution adapter
