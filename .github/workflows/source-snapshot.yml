@@ -1,0 +1,35 @@
+name: Reproducible source snapshot
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out immutable commit
+        uses: actions/checkout@v4
+      - name: Build tracked-source archive
+        shell: bash
+        run: |
+          set -euo pipefail
+          git archive --format=zip --output=smart-juicer-source.zip HEAD
+          sha256sum smart-juicer-source.zip > SHA256SUMS-source.txt
+          unzip -Z1 smart-juicer-source.zip | grep -qx 'routing-policy.ts'
+          unzip -Z1 smart-juicer-source.zip | grep -qx 'routing-policy.test.mjs'
+          unzip -Z1 smart-juicer-source.zip | grep -qx 'docs/ROUTING-PILOT.md'
+          test -z "$(unzip -Z1 smart-juicer-source.zip | grep -Ei '(^|/)(\.git/|STATUS\.md|AGENTS\.md|AUFGABENPLAN\.md|node_modules/|\.env($|\.)|.*\.pem$|.*\.key$)' || true)"
+      - name: Upload public tracked-source snapshot
+        uses: actions/upload-artifact@v4
+        with:
+          name: smart-juicer-source-${{ github.sha }}
+          path: |
+            smart-juicer-source.zip
+            SHA256SUMS-source.txt
+          retention-days: 30
+          if-no-files-found: error
