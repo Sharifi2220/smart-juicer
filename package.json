@@ -7,7 +7,7 @@
     "node": ">=24.0.0"
   },
   "scripts": {
-    "test": "node --test observer.test.mjs inspector.test.mjs shadow-mode.test.mjs routing-policy.test.mjs codex-executor.test.mjs benchmark-gate.test.mjs",
+    "test": "node --test observer.test.mjs inspector.test.mjs shadow-mode.test.mjs routing-policy.test.mjs codex-executor.test.mjs benchmark-gate.test.mjs auto-model-plan.test.mjs",
     "check": "node ./node_modules/typescript/bin/tsc --noEmit -p tsconfig.json",
     "observe": "node cli.ts",
     "doctor": "node sj-dev-cli.ts doctor",
@@ -18,11 +18,12 @@
     "local": "node sj-local.ts",
     "shadow-demo": "node sj-local.ts --shadow-demo",
     "route": "node routing-cli.ts",
-    "execute": "node codex-exec-cli.ts"
+    "execute": "node codex-exec-cli.ts",
+    "auto-plan": "node auto-model-cli.ts",
+    "auto-plan-demo": "node auto-model-demo.mjs"
   },
   "devDependencies": {
     "@types/node": "22.15.0",
     "typescript": "5.8.3"
   }
 }
-
