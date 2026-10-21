@@ -76,3 +76,25 @@ test('every pair must match the class, and partial cohorts are rejected',()=>{
   assert.equal(planAutomaticModel(request(evidence({trials:r})),clock).reasonCode,'MIXED_TASK_CLASS_EVIDENCE');
   assert.equal(planAutomaticModel(request(evidence({trials:rows().slice(0,58)})),clock).selectedModel,null);
 });
+
+test('validly signed but uneven cohort fails the minimum per-pair win rate',()=>{
+  const r=rows();
+  for(let i=1;i<r.length;i+=2){
+    const idx=(i-1)/2;
+    if(idx<8){r[i].inputTokens=205;r[i].outputTokens=20;}
+    else {r[i].inputTokens=0;r[i].outputTokens=0;r[i].cachedInputTokens=0;}
+  }
+  const out=planAutomaticModel(request(evidence({trials:r})),clock);
+  assert.equal(out.reasonCode,'LOW_PER_PAIR_WIN_RATE');
+  assert.equal(out.selectedModel,null);
+});
+test('signature rejects altered but well-formed cohort',()=>{
+  const x=request();
+  x.evidence.payloadBase64=evidence({candidateModel:'other-model'}).payloadBase64;
+  assert.equal(planAutomaticModel(x,clock).reasonCode,'INVALID_EVIDENCE_SIGNATURE');
+});
+test('unsafe task and ambiguous classification retain native settings',()=>{
+  const x=request();
+  x.task=task('README CSS button');
+  assert.equal(planAutomaticModel(x,clock).selectedModel,null);
+});
