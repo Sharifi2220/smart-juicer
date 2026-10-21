@@ -8,8 +8,8 @@
  * and a budget authorization. The budget is an authorization boundary only;
  * billing remains UNKNOWN until provider-side evidence is collected.
  */
-import { spawn } from 'node:child_process';
-import { realpathSync } from 'node:fs';
+import { execFileSync, spawn } from 'node:child_process';
+import { lstatSync, realpathSync } from 'node:fs';
 import { isAbsolute, relative, resolve } from 'node:path';
 import { inspectGitRepository, type ScopeReport } from './inspector.ts';
 
@@ -180,11 +180,41 @@ function parseEventLine(line: string, usage: CodexUsage, eventTypes: Set<string>
  * Execute exactly one explicitly approved Codex turn. This function is not
  * called by the routing policy or by any default CLI command.
  */
+/** The request JSON is not its own authorization: the host must explicitly
+ * allow this invocation and pin the canonical isolated worktree out-of-band.
+ */
+export function validateHostExecutionGate(root: string, env: NodeJS.ProcessEnv = process.env): void {
+  if(env.SMART_JUICER_EXECUTE !== '1') throw new TypeError('EXECUTION_OPT_IN_REQUIRED');
+  const hostRoot=env.SMART_JUICER_APPROVED_ROOT;
+  if(typeof hostRoot!=='string'||!isAbsolute(hostRoot)) throw new TypeError('HOST_APPROVED_ROOT_REQUIRED');
+  const actual=realpathSync(root);
+  const approved=realpathSync(hostRoot);
+  if(relative(actual,approved)!==''||relative(approved,actual)!=='') throw new TypeError('HOST_APPROVED_ROOT_MISMATCH');
+}
+
+/** Reject regular checkouts and submodules incorrectly marked "isolated".
+ * This is still a snapshot, not a host sandbox / TOCTOU security boundary.
+ */
+export function assertLinkedGitWorktree(root: string): void {
+  const dotGit=lstatSync(resolve(root,'.git'));
+  if(dotGit.isSymbolicLink()||!dotGit.isFile()) throw new TypeError('LINKED_GIT_WORKTREE_REQUIRED');
+  const opts={encoding:'utf8' as const,timeout:5000,windowsHide:true};
+  const git=(argument:string)=>realpathSync(execFileSync('git',
+    ['--no-optional-locks','-c','core.fsmonitor=false','-C',root,'rev-parse','--path-format=absolute',argument],opts).trim());
+  const privateGitDir=git('--git-dir');
+  const commonGitDir=git('--git-common-dir');
+  if(relative(privateGitDir,commonGitDir)===''&&relative(commonGitDir,privateGitDir)==='') {
+    throw new TypeError('LINKED_GIT_WORKTREE_REQUIRED');
+  }
+}
+
 export async function executeCodexRun(input: ExecutionRequest): Promise<ExecutionResult> {
   validateExecutionRequest(input);
   const root = realpathSync(resolve(input.root));
+  validateHostExecutionGate(root);
   const approvedRoot = realpathSync(resolve(input.approval.approvedRoot));
   if (relative(root, approvedRoot) !== '' || relative(approvedRoot, root) !== '') throw new TypeError('WORKTREE_IDENTITY_CHANGED');
+  assertLinkedGitWorktree(root);
   const scope = inspectGitRepository(root);
   if (scope.gitDirty) throw new TypeError('DIRTY_WORKTREE_REQUIRES_ISOLATED_FIXTURE');
   if (scope.sensitivePaths.length > 0) throw new TypeError('SENSITIVE_PATH_REQUIRES_REVIEW');
