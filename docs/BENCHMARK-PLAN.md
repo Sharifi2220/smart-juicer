@@ -17,3 +17,5 @@ The local gate is exposed by `assessIndependentB0B1` in `benchmark.ts`. It requi
 
 No paid inference is started by tests or by the default CLI. A real run requires a separate written budget approval and an explicitly approved disposable worktree. Do not report savings from the plan or from synthetic records.
 
+
+Primary metric: aggregate percent saved input and output tokens; pricing is not needed.
