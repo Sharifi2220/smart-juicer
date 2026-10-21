@@ -1,0 +1,61 @@
+name: Publish reviewed v0.2.0-alpha.2
+
+# Run only after both Linux/Windows CI jobs on a main-branch push succeeded.
+# The release notes must be changed in exactly that commit; no generic release-on-push.
+on:
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: smart-juicer-alpha2-release
+  cancel-in-progress: false
+
+jobs:
+  prerelease:
+    if: >-
+      github.repository == 'Sharifi2220/smart-juicer' &&
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'push' &&
+      github.event.workflow_run.head_branch == 'main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out exactly the verified CI commit
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          persist-credentials: false
+
+      - name: Check one-shot release conditions
+        shell: bash
+        run: |
+          set -euo pipefail
+          EXPECTED="${{ github.event.workflow_run.head_sha }}"
+          test "$(git rev-parse HEAD)" = "$EXPECTED"
+          test "$(node -p "require('./package.json').version")" = "0.2.0-alpha.2"
+          test -s RELEASE_NOTES_v0.2.0-alpha.2.md
+          # Do not publish on unrelated future main pushes.
+          git diff-tree --no-commit-id --name-only -r HEAD | grep -Fx 'RELEASE_NOTES_v0.2.0-alpha.2.md'
+          # Never move an existing tag, even if the release has not been published.
+          if git ls-remote --exit-code --tags origin refs/tags/v0.2.0-alpha.2; then
+            echo 'Release tag already exists: fail closed'
+            exit 1
+          fi
+
+      - name: Publish experimental pre-release from verified commit
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh release create v0.2.0-alpha.2 \
+            --repo "${{ github.repository }}" \
+            --target "${{ github.event.workflow_run.head_sha }}" \
+            --title "Smart Juicer v0.2.0-alpha.2 (experimental)" \
+            --notes-file RELEASE_NOTES_v0.2.0-alpha.2.md \
+            --prerelease \
+            --latest=false \
+            --fail-on-no-commits

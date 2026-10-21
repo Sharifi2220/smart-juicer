@@ -2,7 +2,7 @@
 
 ## Scope
 
-Smart Juicer v0.2.0-alpha.1 implements a passive local observer and explicitly imported metadata analyzer. The public source tree contains:
+Smart Juicer v0.2.0-alpha.2 implements a passive local observer and explicitly imported token metadata analyzer plus an independently gated and default-disabled Codex execution adapter. The public source tree contains:
 
 - `observer.ts`: deterministic task classification from validated v0.1 JSON input; emits risk, domain, reason codes, and conservative nonexecuting guidance, not model decisions.
 - `cli.ts`: bounded JSON-over-stdin entry point for the observer; one JSON result on stdout.
@@ -12,7 +12,7 @@ Smart Juicer v0.2.0-alpha.1 implements a passive local observer and explicitly i
 - `codex-wrapper.ts`: diagnostic version check and nonexecuting Codex run-plan construction; it never invokes inference.
 - `codex-executor.ts` and `codex-exec-cli.ts`: a separate, opt-in execution adapter. It requires a fresh explicit approval, an exact model for B1, a clean isolated worktree, a bounded prompt/time/output budget, and Codex's read-only or workspace-write sandbox. It passes no prompt in argv, ignores the global config for the invocation, and returns usage metadata without billing claims.
 - `quality-verifier.ts`: allowlist, sensitive-path, and optional Git diff checks; it does not independently establish successful completion.
-- `benchmark.ts`: deterministic aggregation of externally supplied trials; values alone do not constitute independent quality or cost evidence.
+- `benchmark.ts`: deterministic aggregation of externally supplied trials; values alone do not constitute independent quality or authenticated token usage evidence.
 - `sj-dev-cli.ts`: development diagnostic command wrapper.
 
 ## Trust boundaries
