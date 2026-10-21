@@ -26,6 +26,8 @@
     "benchmark.ts",
     "sj-dev-cli.ts",
     "sj-local.ts",
-    "shadow-mode.ts"
+    "shadow-mode.ts",
+    "routing-policy.ts",
+    "routing-cli.ts"
   ]
 }
