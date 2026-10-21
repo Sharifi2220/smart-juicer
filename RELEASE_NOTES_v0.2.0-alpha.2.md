@@ -12,7 +12,7 @@
 
 ## Safety and accuracy
 
-**No real token savings have been measured or independently verified.** The often-cited 30% result comes from synthetic/imported fixture data and must not be advertised as field performance. `claimedTokenSavingsPercent` is computed from imported claims, not audited provider usage. Cross-provider cache usage fields require normalization; see [Research and evaluation](docs/RESEARCH-AND-EVALUATION.md).
+**No real token savings have been measured or independently verified.** The often-cited 30% result comes from synthetic/imported fixture data and must not be advertised as field performance. `claimedTokenSavingsPercent` is computed from imported claims, not audited provider usage. Cross-provider cache usage fields require normalization; see [Research and evaluation](https://github.com/Sharifi2220/smart-juicer/blob/v0.2.0-alpha.2/docs/RESEARCH-AND-EVALUATION.md).
 
 The adapter has not been used for paid inference. Its budget value is **not** a provider-enforced financial cap. Git-worktree inspection and Codex sandbox flags are **not** production isolation or a complete TOCTOU defense. Independent quality acceptance, live usage provenance, host privileges, model entitlement and execution budget authorization remain open. Do not point it at production repositories.
 
@@ -30,10 +30,10 @@ Node.js 24 or newer is required. No paid model invocation is performed by these 
 
 ## Further reading
 
-- [README](README.md)
-- [Developer Guide](docs/DEVELOPER-GUIDE.md)
-- [Benchmark plan](docs/BENCHMARK-PLAN.md)
+- [README](https://github.com/Sharifi2220/smart-juicer/blob/v0.2.0-alpha.2/README.md)
+- [Developer Guide](https://github.com/Sharifi2220/smart-juicer/blob/v0.2.0-alpha.2/docs/DEVELOPER-GUIDE.md)
+- [Benchmark plan](https://github.com/Sharifi2220/smart-juicer/blob/v0.2.0-alpha.2/docs/BENCHMARK-PLAN.md)
 - [Research and evaluation sources](docs/RESEARCH-AND-EVALUATION.md)
-- [Security](SECURITY.md)
+- [Security](https://github.com/Sharifi2220/smart-juicer/blob/v0.2.0-alpha.2/SECURITY.md)
 
 The tagged source, CI result and release metadata, not an unreviewed local directory, define the published artifact.
