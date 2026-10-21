@@ -71,7 +71,7 @@ function object(v:unknown):v is Record<string,unknown>{
   return v!==null && typeof v==='object' && !Array.isArray(v);
 }
 function parseUtc(value:unknown):number|null {
-  if(typeof value!=='string'||!/\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(?:\.\d{1,3})?Z/.test(value)) return null;
+  if(typeof value!=='string'||!/\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(?:\.\d{1,3})?Z$/.test(value)) return null;
   const t=Date.parse(value);
   return Number.isFinite(t)?t:null;
 }
