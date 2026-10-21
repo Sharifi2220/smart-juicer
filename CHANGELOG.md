@@ -2,6 +2,12 @@
 
 All notable changes to this alpha release are documented here.
 
+
+## Unreleased main-only development
+
+- Experimental signed-evidence offline automatic model selection planning with strict native fallback; no live agent invocation, no automatic configuration change.
+- Proposed expert review roles and research-based validation criteria, plus synthetic CLI demo and regression tests.
+
 ## 0.2.0-alpha.2 — 2026-10-21
 
 ### Added
