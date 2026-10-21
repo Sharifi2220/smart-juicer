@@ -10,7 +10,7 @@ function task(prompt = 'Change the CSS button color') {
 function evidence(n=30, candidateTokens=70) {
   return Array.from({length:n},(_,i)=>[
     {fixtureId:'fixture-'+i,taskClass:'ui',arm:'B0',modelId:null,accepted:true,review:'independent',inputTokens:60,outputTokens:40,cachedInputTokens:10},
-    {fixtureId:'fixture-'+i,taskClass:'ui',arm:'B1',modelId:'model-candidate',accepted:true,review:'independent',inputTokens:Math.min(candidateTokens,40),outputTokens:candidateTokens-Math.min(candidateTokens,40),cachedInputTokens:5}
+    {fixtureId:'fixture-'+i,taskClass:'ui',arm:'B1',modelId:'model-candidate',accepted:true,review:'independent',inputTokens:Math.min(candidateTokens,40),outputTokens:candidateTokens-Math.min(candidateTokens,40),cachedInputTokens:Math.min(5,candidateTokens)}
   ]).flat();
 }
 function sample(overrides={}) {
