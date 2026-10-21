@@ -49,7 +49,7 @@ test('instruction injection never grants privileges',()=>{
   assert.equal(r.autoExecute,false);
 });
 test('mixed classes decline automatic candidate',()=>{
-  const r=recommendModel(sample({task:task('Document the CSS button')}));
+  const r=recommendModel(sample({task:task('README CSS button')}));
   assert.equal(r.reasonCode,'AMBIGUOUS_TASK_CLASS');
   assert.equal(r.suggestedModel,null);
 });
