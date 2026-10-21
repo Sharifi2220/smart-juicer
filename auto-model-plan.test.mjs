@@ -1,6 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {generateKeyPairSync,sign} from 'node:crypto';
+import {execFileSync} from 'node:child_process';
+import {fileURLToPath} from 'node:url';
 import {planAutomaticModel,AUTO_EVIDENCE_SCHEMA} from './auto-model-plan.ts';
 
 const keys=generateKeyPairSync('ed25519');
@@ -97,4 +99,15 @@ test('unsafe task and ambiguous classification retain native settings',()=>{
   const x=request();
   x.task=task('README CSS button');
   assert.equal(planAutomaticModel(x,clock).selectedModel,null);
+});
+
+test('synthetic demo never invokes a model or claims field savings',()=>{
+  const path=fileURLToPath(new URL('./auto-model-demo.mjs',import.meta.url));
+  const output=JSON.parse(execFileSync(process.execPath,[path],{
+    encoding:'utf8',timeout:10000,windowsHide:true
+  }));
+  assert.equal(output.demo,'SYNTHETIC_SELF_SIGNED_NOT_REAL_PROOF');
+  assert.equal(output.action,'AUTO_SELECT_CANDIDATE_PLAN');
+  assert.equal(output.autoExecute,false);
+  assert.equal(output.modelEntitlementVerified,false);
 });
