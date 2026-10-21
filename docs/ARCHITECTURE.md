@@ -10,6 +10,7 @@ Smart Juicer v0.2.0-alpha.1 implements a passive local observer and explicitly i
 - `shadow-mode.ts`: explicit JSON or JSONL input parsing and metadata-only summarization; usage may be unknown and live sessions are never searched.
 - `inspector.ts` and `path-policy.ts`: read-only Git and filesystem-scope diagnostics. These are snapshots, not an authorization boundary or TOCTOU guarantee.
 - `codex-wrapper.ts`: diagnostic version check and nonexecuting Codex run-plan construction; it never invokes inference.
+- `codex-executor.ts` and `codex-exec-cli.ts`: a separate, opt-in execution adapter. It requires a fresh explicit approval, an exact model for B1, a clean isolated worktree, a bounded prompt/time/output budget, and Codex's read-only or workspace-write sandbox. It passes no prompt in argv, ignores the global config for the invocation, and returns usage metadata without billing claims.
 - `quality-verifier.ts`: allowlist, sensitive-path, and optional Git diff checks; it does not independently establish successful completion.
 - `benchmark.ts`: deterministic aggregation of externally supplied trials; values alone do not constitute independent quality or cost evidence.
 - `sj-dev-cli.ts`: development diagnostic command wrapper.
@@ -19,13 +20,17 @@ Smart Juicer v0.2.0-alpha.1 implements a passive local observer and explicitly i
 1. User text, imported JSON, and JSONL events are untrusted.
 2. Model, token, effort, outcome, and quality claims in imported records remain reported metadata, not provider-verified or independently accepted results.
 3. Local Git/filesystem inspections are advisory snapshots subject to races and filesystem-specific behavior.
-4. There is no execution boundary or privileged capability grant: automatic execution is false and `suggestedModel` is null.
+4. The routing policy does not grant execution. The execution adapter is a separate capability that remains disabled unless `SMART_JUICER_EXECUTE=1` and a matching explicit approval document are supplied.
 5. Standard local preview and offline fixture tests require no network, API expenditure, or model invocation. Running an external tool against a user repository is a separate deliberate action.
 
 ## Non-goals
 
-There is no autonomous model routing, Codex session discovery, credential collection, execution engine, guaranteed savings, or formal production security certification. G1 and G2 remain open for any future active engine.
+There is no autonomous model routing, session discovery, credential collection, automatic model switch, guaranteed savings, or formal production security certification. The adapter is an explicit integration point, not a production sandbox; TOCTOU, host policy, provider entitlement and billing remain independently gated. G1 and G2 remain open.
 
 ## Future acceptance prerequisites
 
 An execution-capable version would require a separate host-enforced least-privilege authorization boundary, robust filesystem and sandbox protections, independent quality verification, explicit cost controls, and paired baseline comparison. Passing the current unit tests must not be interpreted as evidence of those results.
+
+
+
+Executor scope correction: `SMART_JUICER_EXECUTE=1` **and** host-supplied `SMART_JUICER_APPROVED_ROOT` are mandatory in the executor itself, distinct from JSON approval claims. The selected root must be a genuine linked Git worktree. This still does not enforce an EUR spending cap or establish an OS-level containment boundary; `budgetEur` is metadata only. Do not call the adapter production-safe or execute paid inference before host-side enforcement and explicit budget approval.
