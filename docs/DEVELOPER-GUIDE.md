@@ -24,6 +24,10 @@ The supported development baseline for this alpha is Node.js 24.x, TypeScript 5.
 - `node sj-dev-cli.ts verify ROOT` — review output only, no acceptance.
 - `node sj-dev-cli.ts stats TRIALS.json` — arithmetic over external trial data.
 
+
+- `npm run auto-plan-demo` — synthetic, self-signed offline model-selection demo; never invokes Codex.
+- `npm run auto-plan -- FILE` — host-key-gated offline model decision over one explicitly named local evidence file; no agent execution.
+
 ## Test conventions
 
 Prefer deterministic, synthetic, nonsecret fixtures. Keep tests isolated from real user repositories. Assert that missing data stays unknown, automatic agent execution remains off, prompt text is not returned, and ambiguous path handling fails closed. Retain OS-conditional fixture skips in reports rather than presenting them as passes.
