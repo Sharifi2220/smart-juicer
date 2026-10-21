@@ -1,6 +1,6 @@
 # Security policy
 
-Smart Juicer 0.2.0-alpha.1 is an experimental, passive, local alpha. It is not a production security boundary and must not be used to authorize agent execution, repository writes, credential handling, or deployment.
+Smart Juicer 0.2.0-alpha.2 is an experimental local alpha. Passive commands remain nonexecuting; a separate Codex execution adapter exists but is disabled by default. It is not a production security boundary and must not be used to authorize agent execution, repository writes, credential handling, or deployment.
 
 ## Reporting a vulnerability
 
@@ -14,7 +14,7 @@ Reports are welcome for reproducible issues in the code shipped in this reposito
 
 The following are known limitations of this alpha and are not security guarantees:
 
-- no active agent execution or automatic routing is provided;
-- no production sandbox, authorization gate, or complete TOCTOU defense is provided;
+- no automatic agent execution or automatic routing is provided; the opt-in executor may launch Codex **only with explicit approval and host environment guards**, and is not production-certified;
+- no production sandbox, comprehensive authorization enforcement, provider billing cap, or complete TOCTOU defense is provided;
 - imported data is processed only when the user explicitly names a local file;
 - diagnostic commands are experimental and must be run only in an isolated, authorized environment.
