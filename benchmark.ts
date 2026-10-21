@@ -56,8 +56,9 @@ export function assessIndependentB0B1(records:readonly unknown[], candidateModel
   const reasons:string[]=[];
   const rows:IndependentBenchmarkTrial[]=[];
   const seen=new Set<string>();
-  if(!ID.test(candidateModel)||candidateModel.length>100) reasons.push('INVALID_CANDIDATE_MODEL');
-  if(!Number.isSafeInteger(minPairs)||minPairs<1) throw new TypeError('INVALID_MIN_PAIRS');
+  if(typeof candidateModel!=='string'||!ID.test(candidateModel)||candidateModel.length>100) reasons.push('INVALID_CANDIDATE_MODEL');
+  if(!Number.isSafeInteger(minPairs)||minPairs<30) throw new TypeError('MINIMUM_30_PAIRS_REQUIRED');
+  if(!Array.isArray(records)||records.length>10000) throw new TypeError('INVALID_BENCHMARK_RECORD_COLLECTION');
   for(const raw of records){
     if(!raw||typeof raw!=='object'||Array.isArray(raw)) { reasons.push('INVALID_RECORD'); continue; }
     const r=raw as Record<string,unknown>;
@@ -79,7 +80,19 @@ export function assessIndependentB0B1(records:readonly unknown[], candidateModel
   const grouped=new Map<string,IndependentBenchmarkTrial[]>();
   for(const row of rows){ const group=grouped.get(row.pairId)??[]; group.push(row); grouped.set(row.pairId,group); }
   const pairs=[...grouped.values()].filter(group=>group.length===2&&group.some(r=>r.arm==='B0')&&group.some(r=>r.arm==='B1'));
-  const completePairs=pairs.length>=minPairs&&pairs.every(group=>group.length===2);
+  // Never silently drop invalid, duplicate, extra or unpaired records. A
+  // superficially valid subset cannot turn a malformed imported dataset PASS.
+  const noRejectedRecords=reasons.length===0&&pairs.length===grouped.size&&pairs.length*2===records.length;
+  if(!noRejectedRecords) reasons.push('REJECTED_OR_UNPAIRED_TRIALS');
+  const modelAndFixtureMatch=pairs.every(group=>{
+    const b=group.find(r=>r.arm==='B0')!;
+    const c=group.find(r=>r.arm==='B1')!;
+    return b.modelId===null&&c.modelId===candidateModel&&
+      b.fixture===c.fixture&&b.fixture===b.pairId&&
+      b.taskClass===c.taskClass&&b.pricingVersion===c.pricingVersion;
+  });
+  if(!modelAndFixtureMatch) reasons.push('INCONSISTENT_PAIR_OR_MODEL');
+  const completePairs=pairs.length>=minPairs&&noRejectedRecords&&modelAndFixtureMatch;
   if(!completePairs) reasons.push('INSUFFICIENT_COMPLETE_PAIRS');
   const independentQuality=pairs.length>0&&pairs.every(group=>group.every(r=>r.review==='independent'&&r.accepted===true&&r.acceptanceEvidenceId.length>0));
   if(!independentQuality) reasons.push('INDEPENDENT_QUALITY_GATE_FAIL');
@@ -96,7 +109,7 @@ export function assessIndependentB0B1(records:readonly unknown[], candidateModel
   }
   const claimedSavingsPercent=baselineCostEur!==null&&baselineCostEur>0&&candidateCostEur!==null ?
     Math.round((1-candidateCostEur/baselineCostEur)*10000)/100 : null;
-  const ready=completePairs&&independentQuality&&realCostEvidence&&usageComplete&&!qualityRegression&&
+  const ready=completePairs&&noRejectedRecords&&modelAndFixtureMatch&&independentQuality&&realCostEvidence&&usageComplete&&!qualityRegression&&
     baselineCostEur!==null&&baselineCostEur>0&&candidateCostEur!==null;
   if(!ready) reasons.push('NOT_READY_FOR_MANUAL_CANDIDATE_REVIEW');
   return {schema_version:'v0.4-benchmark-gate',minPairs,pairCount:pairs.length,completePairs,independentQuality,
