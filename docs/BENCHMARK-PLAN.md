@@ -9,7 +9,7 @@ This repository contains only the neutral benchmark plan. It does not contain re
 
 Use the 30 case IDs in `benchmark-plan.json`. For every case, run the same prompt, disposable repository state, scope, timeout policy, and acceptance contract in both arms. Keep the private task material and repository outside this public source tree.
 
-## Quality and cost gate
+## Quality and token gate
 
 Each submitted trial must include an independent acceptance evidence ID, complete input/output usage, a provider-backed cost evidence source, the evidence reference, capture time, and pricing version. Token counts are not EUR costs. A missing cost or quality result remains `UNKNOWN` and disqualifies the candidate.
 
