@@ -37,3 +37,7 @@ Node.js 24 or newer is required. No paid model invocation is performed by these 
 - [Security](https://github.com/Sharifi2220/smart-juicer/blob/v0.2.0-alpha.2/SECURITY.md)
 
 The tagged source, CI result and release metadata, not an unreviewed local directory, define the published artifact.
+
+## Publication integrity
+
+This pre-release is published only after the exact main-branch commit passes Windows and Ubuntu CI. The publish job verifies that this release-notes file changed in that commit and refuses to move an existing tag.
