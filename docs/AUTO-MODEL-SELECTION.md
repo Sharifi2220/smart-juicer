@@ -48,6 +48,9 @@ The UTF-8 JSON bytes represented in `payloadBase64` follow `v0.1-signed-evidence
 
 An empty trial array **cannot qualify**. Actual evidence must include 30 accepted and complete B0/B1 pairs using the existing `v0.5-token-gate` trial fields. Sign the exact serialized bytes using Ed25519; *any re-serialization requires re-signing*. A trusted security/evaluation issuer should only sign records after independently checking acceptance and real usage provenance, although the current planner itself cannot verify that review was legitimate.
 
+
+For a fully synthetic, reproducible smoke demonstration (no model call), run `npm run auto-plan-demo`. The self-signed demo key proves only that signature verification works; it must never be used as evidence of independent real-world acceptance or token savings.
+
 ## Why not route immediately?
 
 RouteLLM (Berkeley/LMSYS) shows how routing policies can be trained from preference evidence and emphasizes calibration on representative tasks. FrugalGPT studies staged routing/cascades. Neither study establishes that a particular model saves **tokens** on this repository, nor that cost savings imply token-volume reductions. HELM encourages multidimensional comparison. OWASP guidance requires least privilege and human approval for high-impact actions. Therefore Smart Juicer starts with deterministic, testable, nonexecuting decisions and future shadow-mode evaluation.
