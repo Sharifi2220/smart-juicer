@@ -162,7 +162,12 @@ export function inspectGitRepository(root: string): ScopeReport {
   // Git may render the same Windows path with different separators or casing
   // (notably on hosted runners). Compare canonical paths semantically while
   // still requiring both paths to resolve to the exact same filesystem root.
-  if (relative(canonicalRoot, canonicalGitRoot) !== '' || relative(canonicalGitRoot, canonicalRoot) !== '') {
+  // Device/inode identity also handles Windows short-vs-long path aliases.
+  const rootStat = lstatSync(canonicalRoot);
+  const gitRootStat = lstatSync(canonicalGitRoot);
+  const sameFilesystemRoot = rootStat.dev === gitRootStat.dev && rootStat.ino === gitRootStat.ino && rootStat.ino !== 0;
+  const sameCanonicalPath = relative(canonicalRoot, canonicalGitRoot) === '' && relative(canonicalGitRoot, canonicalRoot) === '';
+  if (!sameFilesystemRoot && !sameCanonicalPath) {
     throw new TypeError('ROOT_MUST_BE_GIT_TOPLEVEL');
   }
   const raw = execFileSync('git', [...GIT_READONLY_OPTIONS, '-C', canonicalRoot, 'status', '--porcelain=v1', '-z', '--untracked-files=all', '--ignore-submodules=none', '--renames'],
