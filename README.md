@@ -4,9 +4,9 @@ Smart Juicer is an experimental, local, read-only observer for coding-task metad
 
 ## Status
 
-**0.2.0-alpha.1 — experimental passive alpha**
+**0.2.0-alpha.2 — experimental GitHub pre-release**
 
-This is an honest, limited GitHub alpha. It is not production-ready and does not provide an active routing engine.
+This source release includes a passive observer, advisory-only token-efficiency candidate comparison, and a **separately gated, disabled-by-default** Codex execution adapter. It is not production-ready, and it does not automatically choose models or run agents.
 
 ## What works
 
@@ -19,7 +19,7 @@ This is an honest, limited GitHub alpha. It is not production-ready and does not
 
 ## What this alpha does not do
 
-- It does not start Codex or another coding agent.
+- No default, observer, routing, demo, stats or test command starts a coding agent. **Only** the separate `npm run execute` adapter can invoke Codex after explicit host and request approvals; do not enable it in an untrusted environment.
 - It does not automatically execute a model choice, change effort, or alter native configuration. Experimental candidate suggestions require manual review and never invoke Codex.
 - It does not read live sessions, discover queues, or collect prompts, credentials, or raw logs.
 - It does not guarantee token, cost, latency, or quality improvements.
@@ -49,6 +49,8 @@ The test suite is local and synthetic. It does not make paid model calls.
 - [Passive Shadow Import](docs/SHADOW-IMPORT.md)
 - [Developer Guide](docs/DEVELOPER-GUIDE.md)
 - [Evidence-gated routing pilot](docs/ROUTING-PILOT.md)
+- [Paired token benchmark and quality gate](docs/BENCHMARK-PLAN.md)
+- [Research-backed measurement and evaluation](docs/RESEARCH-AND-EVALUATION.md)
 - [Contributing](CONTRIBUTING.md)
 - [Security policy](SECURITY.md)
 
@@ -139,7 +141,7 @@ Before an explicit pilot run, the trusted host must also set `SMART_JUICER_APPRO
 
 ## Benchmark preparation
 
-`benchmark-plan.json` defines 30 neutral case IDs for paired B0/B1 runs. `docs/BENCHMARK-PLAN.md` and `assessIndependentB0B1` define the independent acceptance, provider-backed cost, usage-completeness, and no-regression gates. The plan contains no real prompts or cost records and is not a savings result.
+`benchmark-plan.json` defines 30 neutral case IDs for paired B0/B1 runs. `docs/BENCHMARK-PLAN.md` and `assessIndependentB0B1` define the independent acceptance, source-labelled **token-usage completeness**, and no-regression gates. The plan contains no real prompts, model-run logs, or billing records and is not a verified savings result. The synthetic 30% test example is not empirical evidence.
 
 ## Development
 
