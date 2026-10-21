@@ -31,3 +31,6 @@ There is no autonomous model routing, session discovery, credential collection, 
 
 An execution-capable version would require a separate host-enforced least-privilege authorization boundary, robust filesystem and sandbox protections, independent quality verification, explicit cost controls, and paired baseline comparison. Passing the current unit tests must not be interpreted as evidence of those results.
 
+
+
+Executor scope correction: `SMART_JUICER_EXECUTE=1` **and** host-supplied `SMART_JUICER_APPROVED_ROOT` are mandatory in the executor itself, distinct from JSON approval claims. The selected root must be a genuine linked Git worktree. This still does not enforce an EUR spending cap or establish an OS-level containment boundary; `budgetEur` is metadata only. Do not call the adapter production-safe or execute paid inference before host-side enforcement and explicit budget approval.
