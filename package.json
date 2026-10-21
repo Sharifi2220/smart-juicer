@@ -19,7 +19,8 @@
     "shadow-demo": "node sj-local.ts --shadow-demo",
     "route": "node routing-cli.ts",
     "execute": "node codex-exec-cli.ts",
-    "auto-plan": "node auto-model-cli.ts"
+    "auto-plan": "node auto-model-cli.ts",
+    "auto-plan-demo": "node auto-model-demo.mjs"
   },
   "devDependencies": {
     "@types/node": "22.15.0",
