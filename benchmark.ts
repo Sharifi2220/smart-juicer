@@ -21,23 +21,26 @@ export interface IndependentBenchmarkTrial extends Trial {
   modelId:string|null;
   review:'independent';
   acceptanceEvidenceId:string;
-  costEvidenceSource:CostEvidenceSource;
-  costEvidenceRef:string;
+  /** Explicit usage metadata source; label is not independently authenticated. */
+  usageEvidenceSource:'codex_jsonl'|'provider_usage_export';
+  usageEvidenceRef:string;
   capturedAt:string;
-  pricingVersion:string;
+  costEvidenceSource?:CostEvidenceSource;
+  costEvidenceRef?:string;
+  pricingVersion?:string;
 }
 export interface BenchmarkGateReport {
-  schema_version:'v0.4-benchmark-gate';
+  schema_version:'v0.5-token-gate';
   minPairs:number;
   pairCount:number;
   completePairs:boolean;
   independentQuality:boolean;
-  realCostEvidence:boolean;
   usageComplete:boolean;
   qualityRegression:boolean;
-  baselineCostEur:number|null;
-  candidateCostEur:number|null;
-  claimedSavingsPercent:number|null;
+  baselineTotalTokens:number|null;
+  candidateTotalTokens:number|null;
+  /** Token-volume reduction calculated from imported usage records, NOT EUR savings. */
+  claimedTokenSavingsPercent:number|null;
   readyForManualCandidateReview:boolean;
   safeForAutomaticRouting:false;
   reasons:readonly string[];
@@ -48,9 +51,9 @@ const COST_SOURCES:readonly string[]=['provider_invoice','provider_billing_expor
 const ID=/^[A-Za-z0-9][A-Za-z0-9_.:-]{0,159}$/;
 
 /**
- * Validate a paired B0/B1 evidence set without treating imported labels as
- * authenticated proof. Missing quality, usage or provider-cost evidence keeps
- * the result ineligible and never creates an automatic routing decision.
+ * Validate a paired B0/B1 TOKEN comparison without treating imported labels as
+ * authenticated proof. Price data is deliberately irrelevant.
+ * Missing quality or usage evidence blocks selection and never grants routing.
  */
 export function assessIndependentB0B1(records:readonly unknown[], candidateModel:string, minPairs=30): BenchmarkGateReport {
   const reasons:string[]=[];
@@ -67,13 +70,14 @@ export function assessIndependentB0B1(records:readonly unknown[], candidateModel
       (r.arm==='B0'||r.arm==='B1')&&typeof r.accepted==='boolean'&&r.review==='independent'&&
       (r.modelId===null||(typeof r.modelId==='string'&&ID.test(r.modelId)))&&
       typeof r.acceptanceEvidenceId==='string'&&ID.test(r.acceptanceEvidenceId)&&
-      typeof r.costEvidenceSource==='string'&&COST_SOURCES.includes(r.costEvidenceSource)&&
-      typeof r.costEvidenceRef==='string'&&r.costEvidenceRef.trim().length>0&&r.costEvidenceRef.length<=400&&
-      typeof r.capturedAt==='string'&&Number.isFinite(Date.parse(r.capturedAt))&&
-      typeof r.pricingVersion==='string'&&r.pricingVersion.trim().length>0&&r.pricingVersion.length<=200;
+      (r.usageEvidenceSource==='codex_jsonl'||r.usageEvidenceSource==='provider_usage_export')&&
+      typeof r.usageEvidenceRef==='string'&&r.usageEvidenceRef.trim().length>0&&r.usageEvidenceRef.length<=400&&
+      typeof r.capturedAt==='string'&&Number.isFinite(Date.parse(r.capturedAt));
     if(!valid){ reasons.push('INVALID_RECORD'); continue; }
-    try { summarizeTrials([r as unknown as Trial]); } catch { reasons.push('INVALID_MEASUREMENT'); continue; }
-    const row=r as unknown as IndependentBenchmarkTrial;
+    // Cost is optional for a token metric; missing cost must not be read as EUR 0.
+    const normalized={costEur:null,cachedInputTokens:null,...r};
+    try { summarizeTrials([normalized as unknown as Trial]); } catch { reasons.push('INVALID_MEASUREMENT'); continue; }
+    const row=normalized as unknown as IndependentBenchmarkTrial;
     if(seen.has(row.id)){ reasons.push('DUPLICATE_TRIAL_ID'); continue; }
     seen.add(row.id); rows.push(row);
   }
@@ -89,31 +93,38 @@ export function assessIndependentB0B1(records:readonly unknown[], candidateModel
     const c=group.find(r=>r.arm==='B1')!;
     return b.modelId===null&&c.modelId===candidateModel&&
       b.fixture===c.fixture&&b.fixture===b.pairId&&
-      b.taskClass===c.taskClass&&b.pricingVersion===c.pricingVersion;
+      b.taskClass===c.taskClass;
   });
   if(!modelAndFixtureMatch) reasons.push('INCONSISTENT_PAIR_OR_MODEL');
   const completePairs=pairs.length>=minPairs&&noRejectedRecords&&modelAndFixtureMatch;
   if(!completePairs) reasons.push('INSUFFICIENT_COMPLETE_PAIRS');
   const independentQuality=pairs.length>0&&pairs.every(group=>group.every(r=>r.review==='independent'&&r.accepted===true&&r.acceptanceEvidenceId.length>0));
   if(!independentQuality) reasons.push('INDEPENDENT_QUALITY_GATE_FAIL');
-  const realCostEvidence=pairs.length>0&&pairs.every(group=>group.every(r=>r.costEur!==null&&COST_SOURCES.includes(r.costEvidenceSource)&&r.costEvidenceRef.trim().length>0));
-  if(!realCostEvidence) reasons.push('REAL_COST_EVIDENCE_MISSING');
-  const usageComplete=pairs.length>0&&pairs.every(group=>group.every(r=>r.inputTokens!==null&&r.outputTokens!==null));
+  const usageComplete=pairs.length>0&&pairs.every(group=>group.every(r=>
+    r.inputTokens!==null&&r.outputTokens!==null&&
+    r.usageEvidenceRef.length>0&&(r.usageEvidenceSource==='codex_jsonl'||r.usageEvidenceSource==='provider_usage_export')));
   if(!usageComplete) reasons.push('USAGE_MISSING');
   const qualityRegression=pairs.some(group=>group.some(r=>r.accepted!==true));
   if(qualityRegression) reasons.push('QUALITY_REGRESSION');
-  let baselineCostEur:number|null=null,candidateCostEur:number|null=null;
-  if(completePairs&&independentQuality&&realCostEvidence){
-    baselineCostEur=pairs.reduce((sum,group)=>sum+group.find(r=>r.arm==='B0')!.costEur!,0);
-    candidateCostEur=pairs.reduce((sum,group)=>sum+group.find(r=>r.arm==='B1')!.costEur!,0);
+  let baselineTotalTokens:number|null=null,candidateTotalTokens:number|null=null;
+  if(completePairs&&independentQuality&&usageComplete&&!qualityRegression){
+    const total=(arm:Arm)=>pairs.reduce((sum,group)=>{
+      const r=group.find(row=>row.arm===arm)!;
+      return sum+r.inputTokens!+r.outputTokens!;
+    },0);
+    const b=total('B0'),c=total('B1');
+    if(Number.isSafeInteger(b)&&Number.isSafeInteger(c)&&b>0){
+      baselineTotalTokens=b; candidateTotalTokens=c;
+    } else reasons.push('INVALID_TOKEN_TOTALS');
   }
-  const claimedSavingsPercent=baselineCostEur!==null&&baselineCostEur>0&&candidateCostEur!==null ?
-    Math.round((1-candidateCostEur/baselineCostEur)*10000)/100 : null;
-  const ready=completePairs&&noRejectedRecords&&modelAndFixtureMatch&&independentQuality&&realCostEvidence&&usageComplete&&!qualityRegression&&
-    baselineCostEur!==null&&baselineCostEur>0&&candidateCostEur!==null;
+  const claimedTokenSavingsPercent=baselineTotalTokens!==null&&candidateTotalTokens!==null?
+    Math.round((1-candidateTotalTokens/baselineTotalTokens)*10000)/100:null;
+  const ready=completePairs&&noRejectedRecords&&modelAndFixtureMatch&&independentQuality&&usageComplete&&!qualityRegression&&
+    claimedTokenSavingsPercent!==null&&claimedTokenSavingsPercent>=15;
+  if(claimedTokenSavingsPercent!==null&&claimedTokenSavingsPercent<15) reasons.push('NO_MEANINGFUL_TOKEN_SAVINGS');
   if(!ready) reasons.push('NOT_READY_FOR_MANUAL_CANDIDATE_REVIEW');
-  return {schema_version:'v0.4-benchmark-gate',minPairs,pairCount:pairs.length,completePairs,independentQuality,
-    realCostEvidence,usageComplete,qualityRegression,baselineCostEur,candidateCostEur,claimedSavingsPercent,
+  return {schema_version:'v0.5-token-gate',minPairs,pairCount:pairs.length,completePairs,independentQuality,
+    usageComplete,qualityRegression,baselineTotalTokens,candidateTotalTokens,claimedTokenSavingsPercent,
     readyForManualCandidateReview:ready,safeForAutomaticRouting:false,reasons:[...new Set(reasons)]};
 }
 const count=(v:number|null)=>v!==null && Number.isFinite(v) && v>=0;
