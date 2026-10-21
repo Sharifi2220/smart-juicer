@@ -158,7 +158,13 @@ export function inspectGitRepository(root: string): ScopeReport {
   const canonicalRoot = realpathSync(root);
   const gitRoot = execFileSync('git', [...GIT_READONLY_OPTIONS, '-C', canonicalRoot, 'rev-parse', '--show-toplevel'],
     {encoding:'utf8', timeout:5000, windowsHide:true}).trim();
-  if (realpathSync(gitRoot) !== canonicalRoot) throw new TypeError('ROOT_MUST_BE_GIT_TOPLEVEL');
+  const canonicalGitRoot = realpathSync(gitRoot);
+  // Git may render the same Windows path with different separators or casing
+  // (notably on hosted runners). Compare canonical paths semantically while
+  // still requiring both paths to resolve to the exact same filesystem root.
+  if (relative(canonicalRoot, canonicalGitRoot) !== '' || relative(canonicalGitRoot, canonicalRoot) !== '') {
+    throw new TypeError('ROOT_MUST_BE_GIT_TOPLEVEL');
+  }
   const raw = execFileSync('git', [...GIT_READONLY_OPTIONS, '-C', canonicalRoot, 'status', '--porcelain=v1', '-z', '--untracked-files=all', '--ignore-submodules=none', '--renames'],
     {encoding:'buffer', timeout:10000, maxBuffer:2*1024*1024, windowsHide:true});
   const changedPaths = parseGitPorcelainV1Z(raw);
