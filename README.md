@@ -15,6 +15,7 @@ This is an honest, limited GitHub alpha. It is not production-ready and does not
 - Metadata-only summaries for model, thinking effort, token counts, duration, terminal status, failed attempts, and quality markers when those fields are present.
 - Diagnostic repository inspection, planning, verification, and benchmark helpers, clearly marked as experimental.
 - Regression tests and TypeScript checks that run on Node.js 24.
+- Experimental *advisory* evidence-gated candidate model selection from user-supplied paired data; no model is automatically invoked or changed.
 
 ## What this alpha does not do
 
@@ -47,6 +48,7 @@ The test suite is local and synthetic. It does not make paid model calls.
 - [Architecture and trust boundaries](docs/ARCHITECTURE.md)
 - [Passive Shadow Import](docs/SHADOW-IMPORT.md)
 - [Developer Guide](docs/DEVELOPER-GUIDE.md)
+- [Evidence-gated routing pilot](docs/ROUTING-PILOT.md)
 - [Contributing](CONTRIBUTING.md)
 - [Security policy](SECURITY.md)
 
@@ -117,6 +119,14 @@ node sj-dev-cli.ts stats <trials.json>
 ```
 
 `doctor` performs a local CLI version probe. `plan` creates a non-executing plan and requires explicit human approval in its returned contract. The diagnostic helpers must not be interpreted as a production safety guarantee.
+
+## Experimental candidate recommendation
+
+```text
+npm run route -- path/to/explicit-routing-evidence.json
+```
+
+Requires at least 30 independent-review-claimed B0/B1 pairs with complete prices and no accepted-quality regression. Missing or ambiguous evidence defaults to native Codex settings. Reported savings are **unverified input claims**; no production savings or active model execution is implied. See [Routing Pilot](docs/ROUTING-PILOT.md).
 
 ## Development
 
