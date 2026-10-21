@@ -30,7 +30,8 @@
     "routing-policy.ts",
     "routing-cli.ts",
     "codex-executor.ts",
-    "codex-exec-cli.ts"
+    "codex-exec-cli.ts",
+    "auto-model-plan.ts",
+    "auto-model-cli.ts"
   ]
 }
-
