@@ -7,7 +7,7 @@
     "node": ">=24.0.0"
   },
   "scripts": {
-    "test": "node --test observer.test.mjs inspector.test.mjs shadow-mode.test.mjs",
+    "test": "node --test observer.test.mjs inspector.test.mjs shadow-mode.test.mjs routing-policy.test.mjs",
     "check": "node ./node_modules/typescript/bin/tsc --noEmit -p tsconfig.json",
     "observe": "node cli.ts",
     "doctor": "node sj-dev-cli.ts doctor",
@@ -16,7 +16,8 @@
     "verify": "node sj-dev-cli.ts verify",
     "stats": "node sj-dev-cli.ts stats",
     "local": "node sj-local.ts",
-    "shadow-demo": "node sj-local.ts --shadow-demo"
+    "shadow-demo": "node sj-local.ts --shadow-demo",
+    "route": "node routing-cli.ts"
   },
   "devDependencies": {
     "@types/node": "22.15.0",
