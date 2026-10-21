@@ -10,7 +10,7 @@ Execution is disabled by default. A run requires `SMART_JUICER_EXECUTE=1`, an ex
 
 ## Benchmark boundary
 
-The 30-case plan is prepared but not run. No paid inference, real prompt export, provider billing read, or savings claim is included. B0/B1 results remain blocked until separate budget approval, independent acceptance review, and provider-backed cost evidence exist.
+The 30-case plan is prepared but not run. No paid inference, real prompt export, provider billing read, or verified savings claim is included. B0/B1 results remain blocked until separate budget approval, independent acceptance review, and source-labelled token usage and independent quality evidence exist. The efficiency measure is percentage of saved input + output tokens, not EUR prices.
 
 ## Verification performed locally
 

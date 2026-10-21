@@ -126,7 +126,7 @@ node sj-dev-cli.ts stats <trials.json>
 npm run route -- path/to/explicit-routing-evidence.json
 ```
 
-Requires at least 30 independent-review-claimed B0/B1 pairs with complete prices and no accepted-quality regression. Missing or ambiguous evidence defaults to native Codex settings. Reported savings are **unverified input claims**; no production savings or active model execution is implied. See [Routing Pilot](docs/ROUTING-PILOT.md).
+Requires at least 30 independently reviewed (as imported metadata claims) B0/B1 pairs with complete input and output token counts and matching quality acceptance. Reports **claimedTokenSavingsPercent**, the percentage reduction in input + output token volume. Cached input is not counted twice. A model needs at least 15% reduction for advisory review. Pricing data is not part of this metric. No real savings or agent execution is implied. See [Routing Pilot](docs/ROUTING-PILOT.md).
 
 ## Explicit execution adapter
 
