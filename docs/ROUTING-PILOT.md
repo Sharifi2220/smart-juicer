@@ -1,6 +1,6 @@
-# Evidence-gated model routing pilot (v0.3 draft)
+# Evidence-gated token-efficiency routing pilot (v0.4 preview)
 
-Smart Juicer can now **calculate a provisional candidate model recommendation** from user-supplied, paired comparison records. It cannot verify those records, billing costs, account entitlement, or independent acceptance by itself. This is not yet active routing and **does not prove a real savings rate**.
+Smart Juicer can now **calculate a provisional candidate model recommendation** from user-supplied, paired comparison records. It cannot authenticate imported usage counts, account entitlement, or independent acceptance by itself. This is not yet active routing and **does not prove a real token-saving rate**.
 
 ## Run locally
 
@@ -17,7 +17,7 @@ No network or Codex process is started by the routing command. The JSON file is 
 
 ```json
 {
-  "schema_version": "v0.3-route-pilot",
+  "schema_version": "v0.4-token-route",
   "task": {
     "schema_version": "v0.1",
     "sourceTrust": "user_direct",
@@ -38,7 +38,9 @@ No network or Codex process is started by the routing command. The JSON file is 
       "modelId": null,
       "accepted": true,
       "review": "independent",
-      "costEur": 1.0
+      "inputTokens": 600,
+      "cachedInputTokens": 100,
+      "outputTokens": 400
     },
     {
       "fixtureId": "fixture-001",
@@ -47,25 +49,27 @@ No network or Codex process is started by the routing command. The JSON file is 
       "modelId": "your-account-available-model-id",
       "accepted": true,
       "review": "independent",
-      "costEur": 0.7
+      "inputTokens": 400,
+      "cachedInputTokens": 80,
+      "outputTokens": 300
     }
   ]
 }
 ```
 
-The above **single pair is deliberately insufficient**. The policy needs at least 30 complete, unique, task-class-matched B0/B1 pairs. B0 uses native Codex defaults, recorded with `modelId:null`. B1 uses one explicit model ID. Every record must claim independent review, both arms must have passed, and all costs must be present. A candidate must show at least a 15% reduction in the supplied cost figures. A single quality regression or unknown cost is enough to decline the candidate.
+The above **single pair is deliberately insufficient**. The policy needs at least 30 complete, unique, task-class-matched B0/B1 pairs. B0 uses native Codex defaults, recorded with `modelId:null`. B1 uses one explicit model ID. Every record must claim independent review, both arms must have passed, and all input/output token counts must be present. A candidate must show at least a 15% reduction in the aggregate **input + output token count**. Cached input tokens are a subset of input tokens and must not be added again. A single quality regression or missing token count is enough to decline the candidate.
 
 Those conditions are deliberately conservative but do **not** establish statistically guaranteed savings or provenance. A `review:"independent"` field is not a cryptographic attestation. If data is incomplete, conflicting, unsafe, or below threshold, routing returns `KEEP_NATIVE_DEFAULT` with a machine-readable reason.
 
-The returned `claimedSavingsPercent` is arithmetic over **imported claims**, not a real independently audited saving. `autoExecute:false`, `modelEntitlementVerified:false` and `independentEvidenceAuthenticated:false` are unconditional. The selected candidate, if any, is marked `CANDIDATE_REQUIRES_REVIEW` and has no effect on any Codex config or run.
+The returned `claimedTokenSavingsPercent` is arithmetic over **imported token counts**, not authenticated live usage and **not an EUR price comparison**. Example: B0 uses 600 input + 400 output = 1,000 tokens, B1 uses 400 input + 300 output = 700 tokens, giving 30% claimed token savings. `autoExecute:false`, `modelEntitlementVerified:false` and `independentEvidenceAuthenticated:false` are unconditional. The selected candidate, if any, is marked `CANDIDATE_REQUIRES_REVIEW` and has no effect on any Codex config or run.
 
 ## Still required before a full automatic engine
 
 1. On a clean, isolated Windows fixture root, verify model entitlement and CLI behavior using explicit account permission and explicit-cost authorization.
 2. Run independent, blinded, paired tasks with same prompts, scopes and acceptance criteria in native B0 and candidate B1. Repeat across representative classes. Store metadata only in the private Research Lab, never real prompts in GitHub.
-3. Record prices from an applicable billing/tariff source. Subscription-access token counts are **not** automatically an invoice or per-task EUR cost.
-4. Enforce host-side execution permissions, symlink/reparse-point and TOCTOU defenses, budget caps, independent quality gates and rollback before allowing an agent to make edits.
-5. Only claim measured savings for a dated, documented evaluation with sample size, accepted-task rate, uncertainty, costs and complete run provenance. Do not extrapolate a synthetic test dataset into production ROI.
+3. Record actual source-labelled usage counts in both arms. Imported numbers and cached usage labels must be checked against authorized provider/run metadata; token savings do not imply EUR savings.
+4. Enforce host-side execution permissions, symlink/reparse-point and TOCTOU defenses, actual host spending limits and rollback before allowing an agent to make edits. Ignoring prices as a **metric** does not authorize unlimited paid inference.
+5. Only claim measured **token savings** for a dated, documented evaluation with sample size, accepted-task rate, uncertainty, verified token counts and complete run provenance. Do not extrapolate a synthetic test dataset into production ROI.
 
 No synthetic routing fixture or passing unit test can substitute for these prerequisites.
 
