@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json.schemastore.org/stryker-mutator",
+  "testRunner": "command",
+  "commandRunner": {
+    "command": "node --test candidate.test.mjs"
+  },
+  "coverageAnalysis": "off",
+  "mutate": [
+    "subject.ts"
+  ],
+  "reporters": [
+    "json",
+    "clear-text"
+  ],
+  "jsonReporter": {
+    "fileName": "reports/mutation/mutation.json"
+  },
+  "concurrency": 1,
+  "inPlace": false,
+  "tempDirName": ".stryker-tmp"
+}

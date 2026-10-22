@@ -89,3 +89,11 @@ test('Claude Messages cache read/write token fields are disjoint input component
   assert.deepEqual(u,{source:'anthropic_messages',inputTokens:90,outputTokens:20,cachedInputTokens:50,reasoningTokens:null,totalTokens:110});
   assert.throws(()=>normalizePilotUsage({usage:{input_tokens:10,cache_read_input_tokens:-1,output_tokens:2}},'anthropic_messages'),/INVALID_CACHE_READ_INPUT_TOKENS/);
 });
+
+test('event key order changes invalidate v0.6 journal hash unless a new schema is explicitly introduced',()=>{
+  const m=manifest(1),{sha256}=sealPilotManifest(m),events=[];
+  add(m,sha256,events,'test-1','B0','running');
+  const e=events[0];
+  const reshuffled={sequence:e.sequence,taskId:e.taskId,arm:e.arm,status:e.status,previousHash:e.previousHash,eventHash:e.eventHash};
+  assert.throws(()=>evaluatePilot(m,sha256,[reshuffled]),/INVALID_EVENT_CHAIN/);
+});

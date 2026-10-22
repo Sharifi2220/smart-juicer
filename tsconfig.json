@@ -35,6 +35,10 @@
     "auto-model-cli.ts",
     "pilot-contract.ts",
     "pilot-scope.ts",
-    "pilot-journal.ts"
+    "pilot-journal.ts",
+    "stryker-report.ts",
+    "fixtures/gate-b/task-01-simple/subject.ts",
+    "fixtures/gate-b/task-02-edge/subject.ts",
+    "fixtures/gate-b/task-03-branch/subject.ts"
   ]
 }
