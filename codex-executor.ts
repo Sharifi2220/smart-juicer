@@ -15,6 +15,11 @@ import { inspectGitRepository, type ScopeReport } from './inspector.ts';
 
 export type ExecutionVariant = 'B0' | 'B1';
 export type ExecutionEffort = 'low' | 'medium' | 'high' | 'xhigh';
+/** Independent experimental run binding; NOT an execution approval. */
+export interface PilotRunBinding {
+  readonly manifestSha256: string;
+  readonly runId: string;
+}
 
 const MODEL_ID = /^[A-Za-z0-9][A-Za-z0-9_.:-]{0,100}$/;
 const MAX_PROMPT_BYTES = 64 * 1024;
@@ -35,6 +40,7 @@ export interface ExplicitExecutionApproval {
   readonly approvedAt: string;
   readonly expiresAt: string;
   readonly operator: string;
+  readonly pilot?: PilotRunBinding;
 }
 
 export interface ExecutionRequest {
@@ -45,6 +51,7 @@ export interface ExecutionRequest {
   readonly effort: ExecutionEffort | null;
   readonly allowWrites: boolean;
   readonly approval: ExplicitExecutionApproval;
+  readonly pilot?: PilotRunBinding;
 }
 
 export interface CodexCommandPlan {
@@ -122,8 +129,22 @@ export function validateExecutionRequest(input: ExecutionRequest, now = Date.now
   }
   if (typeof approval.approvedRoot !== 'string' || !isAbsolute(approval.approvedRoot)) throw new TypeError('APPROVED_ROOT_REQUIRED');
   if (approval.modelId !== input.modelId || approval.effort !== input.effort) throw new TypeError('APPROVAL_MODEL_MISMATCH');
-  validateModel(input.modelId, input.variant === 'B1');
-  validateEffort(input.effort, input.variant === 'B1');
+  // Ordinary B0 remains the native, unmodified configuration.
+  // Experimental B0 pins the same model as B1 and requires a separate host gate.
+  const pilot = input.pilot !== undefined || approval.pilot !== undefined;
+  if (pilot) {
+    const id = input.pilot?.runId;
+    if (!input.pilot || !approval.pilot ||
+      !/^[0-9a-f]{64}$/.test(input.pilot.manifestSha256) ||
+      typeof id !== 'string' || !/^[A-Za-z0-9][A-Za-z0-9_.:-]{0,119}:B[01]$/.test(id) ||
+      !id.endsWith(':' + input.variant) ||
+      input.pilot.manifestSha256 !== approval.pilot.manifestSha256 ||
+      id !== approval.pilot.runId) throw new TypeError('PILOT_BINDING_MISMATCH');
+    if (input.effort !== (input.variant === 'B0' ? 'medium' : 'low'))
+      throw new TypeError('PILOT_EFFORT_MISMATCH');
+  }
+  validateModel(input.modelId, input.variant === 'B1' || pilot);
+  validateEffort(input.effort, input.variant === 'B1' || pilot);
   if (typeof approval.operator !== 'string' || !/^[^\r\n]{1,160}$/.test(approval.operator.trim())) throw new TypeError('INVALID_OPERATOR');
   if (typeof approval.budgetEur !== 'number' || !Number.isFinite(approval.budgetEur) || approval.budgetEur <= 0) {
     throw new TypeError('POSITIVE_BUDGET_REQUIRED');
@@ -144,7 +165,7 @@ export function buildCodexCommand(input: ExecutionRequest, root: string): CodexC
     'exec', '--json', '--ephemeral', '--ignore-user-config',
     '--sandbox', sandbox, '--ask-for-approval', 'on-request', '--cd', root
   ];
-  if (input.variant === 'B1') {
+  if (input.variant === 'B1' || input.pilot !== undefined) {
     args.push('--model', input.modelId!, '-c', `model_reasoning_effort=${input.effort}`);
   }
   args.push('-');
@@ -157,23 +178,54 @@ function numberAt(value: unknown, key: string): number | null {
   return finiteInteger(candidate) ? candidate : null;
 }
 
-function updateUsage(current: CodexUsage, event: Record<string, unknown>): CodexUsage {
-  const raw = event.usage && typeof event.usage === 'object' ? event.usage : event;
-  return {
-    inputTokens: numberAt(raw, 'input_tokens') ?? current.inputTokens,
-    cachedInputTokens: numberAt(raw, 'cached_input_tokens') ?? current.cachedInputTokens,
-    outputTokens: numberAt(raw, 'output_tokens') ?? current.outputTokens
-  };
+/** A Codex CLI run's verified accounting comes from turn.completed.usage.
+ * Intermediate objects may contain deltas or cumulative snapshots; never mix them.
+ * A turn.failed event currently has no guaranteed final usage: preserve UNKNOWN.
+ */
+export function usageFromCompletedCodexEvent(value: unknown): CodexUsage {
+  if (!value || typeof value !== 'object' || Array.isArray(value) ||
+      (value as Record<string,unknown>).type !== 'turn.completed') throw new TypeError('NOT_COMPLETED_CODEX_TURN');
+  const event=value as Record<string,unknown>;
+  const raw=event.usage;
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) throw new TypeError('MISSING_COMPLETED_USAGE');
+  const inputTokens=numberAt(raw,'input_tokens');
+  const outputTokens=numberAt(raw,'output_tokens');
+  const cachedInputTokens=numberAt(raw,'cached_input_tokens');
+  if (inputTokens===null || outputTokens===null ||
+      !Number.isSafeInteger(inputTokens+outputTokens) ||
+      (cachedInputTokens!==null && cachedInputTokens>inputTokens))
+    throw new TypeError('INVALID_COMPLETED_USAGE');
+  return {inputTokens,cachedInputTokens,outputTokens};
 }
 
+/** A best-effort teardown helper, NOT an enforced process-containment sandbox. */
+export function processTeardownPlan(pid: number, platform: NodeJS.Platform = process.platform):
+  {readonly command:'taskkill'; readonly args:readonly string[]} | {readonly processGroup:number} {
+  if (!Number.isSafeInteger(pid) || pid <= 0) throw new TypeError('INVALID_PROCESS_PID');
+  return platform === 'win32'
+    ? {command:'taskkill',args:['/PID',String(pid),'/T','/F']}
+    : {processGroup:-pid};
+}
+function terminateProcessTreeBestEffort(child: ReturnType<typeof spawn>): void {
+  if (!child.pid) { try { child.kill('SIGKILL'); } catch {} return; }
+  const plan=processTeardownPlan(child.pid);
+  try {
+    if ('command' in plan) execFileSync(plan.command,[...plan.args],{
+      windowsHide:true,timeout:3000,stdio:'ignore'
+    });
+    else process.kill(plan.processGroup,'SIGKILL');
+  } catch { try { child.kill('SIGKILL'); } catch {} }
+}
 function parseEventLine(line: string, usage: CodexUsage, eventTypes: Set<string>): CodexUsage {
   if (!line.trim()) return usage;
   let parsed: unknown;
   try { parsed = JSON.parse(line); } catch { throw new TypeError('INVALID_CODEX_JSONL_EVENT'); }
   if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) throw new TypeError('INVALID_CODEX_EVENT');
   const event = parsed as Record<string, unknown>;
+  if (event.type==='turn.completed' && eventTypes.has('turn.completed'))
+    throw new TypeError('MULTIPLE_CODEX_TURNS_NOT_SUPPORTED');
   if (typeof event.type === 'string' && /^[A-Za-z0-9_.:-]{1,160}$/.test(event.type)) eventTypes.add(event.type);
-  return updateUsage(usage, event);
+  return event.type === 'turn.completed' ? usageFromCompletedCodexEvent(event) : usage;
 }
 
 /**
@@ -190,6 +242,14 @@ export function validateHostExecutionGate(root: string, env: NodeJS.ProcessEnv =
   const actual=realpathSync(root);
   const approved=realpathSync(hostRoot);
   if(relative(actual,approved)!==''||relative(approved,actual)!=='') throw new TypeError('HOST_APPROVED_ROOT_MISMATCH');
+}
+
+/** Host-controlled, independently pinned pilot manifest. Never trust request JSON alone. */
+export function validateHostPilotGate(input: ExecutionRequest, env: NodeJS.ProcessEnv = process.env): void {
+  if (!input.pilot) return;
+  const pinned = env.SMART_JUICER_PILOT_MANIFEST_SHA256;
+  if (typeof pinned !== 'string' || !/^[0-9a-f]{64}$/.test(pinned) || pinned !== input.pilot.manifestSha256)
+    throw new TypeError('HOST_PILOT_MANIFEST_MISMATCH');
 }
 
 /** Reject regular checkouts and submodules incorrectly marked "isolated".
@@ -212,6 +272,7 @@ export async function executeCodexRun(input: ExecutionRequest): Promise<Executio
   validateExecutionRequest(input);
   const root = realpathSync(resolve(input.root));
   validateHostExecutionGate(root);
+  validateHostPilotGate(input);
   const approvedRoot = realpathSync(resolve(input.approval.approvedRoot));
   if (relative(root, approvedRoot) !== '' || relative(approvedRoot, root) !== '') throw new TypeError('WORKTREE_IDENTITY_CHANGED');
   assertLinkedGitWorktree(root);
@@ -235,17 +296,21 @@ export async function executeCodexRun(input: ExecutionRequest): Promise<Executio
     cwd: plan.cwd,
     shell: false,
     windowsHide: true,
+    detached: process.platform !== 'win32', // required for POSIX process-group teardown
     stdio: ['pipe', 'pipe', 'pipe']
   });
+  // A stopped CLI may leave grandchildren behind on both platforms; the host
+  // sandbox/job controller must independently enforce the true process boundary.
+  child.stdin.on('error',()=>{ /* EPIPE after failure: terminal result remains failed */ });
   const finishLine = (line: string) => { usage = parseEventLine(line, usage, eventTypes); };
   const stdoutPromise = new Promise<void>((resolvePromise, rejectPromise) => {
     child.stdout.on('data', (chunk: Buffer) => {
       outputBytes += chunk.byteLength;
-      if (outputBytes > MAX_OUTPUT_BYTES) { outputLimit = true; child.kill(); return; }
+      if (outputBytes > MAX_OUTPUT_BYTES) { outputLimit = true; terminateProcessTreeBestEffort(child); return; }
       lineBuffer += chunk.toString('utf8');
       const lines = lineBuffer.split(/\r?\n/);
       lineBuffer = lines.pop() ?? '';
-      try { for (const line of lines) { if (line.trim()) eventCount += 1; finishLine(line); } } catch (error) { parseError = true; rejectPromise(error); child.kill(); }
+      try { for (const line of lines) { if (line.trim()) eventCount += 1; finishLine(line); } } catch (error) { parseError = true; rejectPromise(error); terminateProcessTreeBestEffort(child); }
     });
     child.stdout.on('end', () => {
       try { if (lineBuffer) { eventCount += 1; finishLine(lineBuffer); } resolvePromise(); } catch (error) { parseError = true; rejectPromise(error); }
@@ -257,16 +322,17 @@ export async function executeCodexRun(input: ExecutionRequest): Promise<Executio
     child.on('error', () => resolveExit({code: null, signal: null}));
   });
   child.stdin.end(input.prompt, 'utf8');
-  const timer = setTimeout(() => { timedOut = true; child.kill(); }, input.approval.maxDurationMs);
+  const timer = setTimeout(() => { timedOut = true; terminateProcessTreeBestEffort(child); }, input.approval.maxDurationMs);
   const [exit] = await Promise.all([exitPromise, stdoutPromise.catch(() => undefined)]);
   clearTimeout(timer);
   if (outputLimit) status = 'output_limit';
   else if (timedOut) status = 'timed_out';
-  else if (!parseError && exit.code === 0) status = 'completed';
+  else if (!parseError && exit.code === 0 && eventTypes.has('turn.completed') && !eventTypes.has('turn.failed')) status = 'completed';
   else status = 'failed';
   return Object.freeze({executed:true, status, exitCode:exit.code, signal:exit.signal,
     modelId:input.modelId, variant:input.variant, durationMs:Date.now()-started,
-    eventCount, eventTypes:Object.freeze([...eventTypes].sort()), usage:Object.freeze(usage),
+    eventCount, eventTypes:Object.freeze([...eventTypes].sort()),
+    usage:Object.freeze(status==='completed'?usage:{inputTokens:null,cachedInputTokens:null,outputTokens:null}),
     scope, stderrBytes, outputBytes, billingCostEur:null});
 }
 

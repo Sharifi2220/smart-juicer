@@ -3,6 +3,12 @@
 All notable changes to this alpha release are documented here.
 
 
+## Unreleased V4 offline evaluation hardening (not tagged, not committed)
+
+- Add paired 2×2 outcome counts (no inferential non-inferiority claim), correct Anthropic cache input accounting, and Codex completed-turn-only token evidence.
+- Strengthen journal durability semantics with POSIX parent directory flush and bounded lock release retries; process-tree termination remains best-effort, not an OS sandbox.
+- Add explicit mutation-test task-corpus design and V4 constraints; no real data, independent security review or provider authorization.
+
 ## Unreleased main-only development
 
 - Experimental signed-evidence offline automatic model selection planning with strict native fallback; no live agent invocation, no automatic configuration change.

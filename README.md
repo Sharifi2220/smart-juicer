@@ -8,6 +8,14 @@ Smart Juicer is an experimental, local, read-only observer for coding-task metad
 
 This source release includes a passive observer, advisory-only token-efficiency candidate comparison, and a **separately gated, disabled-by-default** Codex execution adapter. It is not production-ready, and it does not automatically choose models or run agents.
 
+## Unreleased v0.6 offline pilot (not part of alpha.2 tag)
+
+The proposed cohort integrity module, durable host-owned fsynced event journal primitive, and same-model B0/B1 effort pinning are experimental. No actual Codex pilot is executed and no real savings are verified. See [Concept V3](docs/CONCEPT-V3.md) and [Pilot integration](docs/PILOT-V0.6.md).
+
+## Unreleased V4 offline review
+
+The uncommitted V4 source dossier extends the pilot with paired outcome contingency counts, source-specific Claude cache accounting, terminal-only Codex usage, POSIX directory-entry fsync, bounded journal lock-release retries and a **best-effort** process-tree kill. None substitutes for Node24 CI, Windows Job Objects, host network/filesystem isolation, a real hidden verifier, a hard provider budget or 60 authorized live runs. See [V4 concept](docs/CONCEPT-V4.md) and [task corpus](docs/TASK-CORPUS-V4.md).
+
 ## What works
 
 - Local task analysis through the interactive preview and the bounded JSON CLI.

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { buildCodexCommand, validateExecutionRequest, validateHostExecutionGate, assertLinkedGitWorktree } from './codex-executor.ts';
+import { buildCodexCommand, validateExecutionRequest, validateHostExecutionGate, validateHostPilotGate, assertLinkedGitWorktree, usageFromCompletedCodexEvent,processTeardownPlan } from './codex-executor.ts';
 import {mkdtempSync,mkdirSync,rmSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
@@ -62,6 +62,22 @@ test('B0 rejects model and effort overrides', () => {
   assert.throws(() => validateExecutionRequest({ ...b0, modelId: 'silent-override' }), /APPROVAL_MODEL_MISMATCH/);
 });
 
+test('pilot B0 medium and B1 low use the same explicit model only with a pinned host manifest', () => {
+  const pilotB0 = {manifestSha256:'a'.repeat(64),runId:'case-001:B0'};
+  const b0 = request({variant:'B0',modelId:'gpt-6.1-sol',effort:'medium',pilot:pilotB0,
+    approval:approval({variant:'B0',modelId:'gpt-6.1-sol',effort:'medium',pilot:pilotB0})});
+  assert.throws(()=>validateHostPilotGate(b0,{}),/HOST_PILOT_MANIFEST_MISMATCH/);
+  assert.doesNotThrow(()=>validateHostPilotGate(b0,{SMART_JUICER_PILOT_MANIFEST_SHA256:pilotB0.manifestSha256}));
+  assert.ok(buildCodexCommand(b0,root).args.includes('model_reasoning_effort=medium'));
+  const pilotB1 = {...pilotB0,runId:'case-001:B1'};
+  const b1=request({variant:'B1',modelId:'gpt-6.1-sol',effort:'low',pilot:pilotB1,
+    approval:approval({variant:'B1',modelId:'gpt-6.1-sol',effort:'low',pilot:pilotB1})});
+  assert.ok(buildCodexCommand(b1,root).args.includes('model_reasoning_effort=low'));
+  assert.throws(()=>validateExecutionRequest({...b0,effort:'low',approval:{...b0.approval,effort:'low'}}),/PILOT_EFFORT_MISMATCH/);
+  assert.throws(()=>validateExecutionRequest({...b0,pilot:{...pilotB0,runId:'case-999:B0'}}),/PILOT_BINDING_MISMATCH/);
+  assert.throws(()=>validateExecutionRequest({...b0,pilot:undefined}),/PILOT_BINDING_MISMATCH/);
+});
+
 test('execution fails closed without fresh explicit approval', () => {
   assert.throws(() => validateExecutionRequest(request({ approval: { ...approval(), explicit: false } })), /EXPLICIT_ISOLATED_APPROVAL_REQUIRED/);
   assert.throws(() => validateExecutionRequest(request({ approval: { ...approval(), expiresAt: new Date(Date.now() - 1_000).toISOString() } })), /APPROVAL_EXPIRED_OR_FUTURE/);
@@ -97,4 +113,17 @@ test('only a verified linked git worktree can reach the execution boundary',()=>
     try{git('-C',repository,'worktree','remove','--force',linked);}catch{}
     rmSync(temp,{recursive:true,force:true,maxRetries:3});
   }
+});
+
+test('Codex usage is trusted only from a complete turn.completed event',()=>{
+  assert.deepEqual(usageFromCompletedCodexEvent({type:'turn.completed',usage:{input_tokens:120,cached_input_tokens:90,output_tokens:40,reasoning_output_tokens:30}}),
+    {inputTokens:120,cachedInputTokens:90,outputTokens:40});
+  assert.throws(()=>usageFromCompletedCodexEvent({type:'turn.failed',usage:{input_tokens:10,output_tokens:10}}),/NOT_COMPLETED/);
+  assert.throws(()=>usageFromCompletedCodexEvent({type:'turn.completed',usage:{input_tokens:10}}),/INVALID_COMPLETED_USAGE/);
+  assert.throws(()=>usageFromCompletedCodexEvent({type:'turn.completed',usage:{input_tokens:10,cached_input_tokens:20,output_tokens:5}}),/INVALID_COMPLETED_USAGE/);
+});
+test('process termination strategy uses process group on POSIX and taskkill tree on Windows',()=>{
+  assert.deepEqual(processTeardownPlan(17,'linux'),{processGroup:-17});
+  assert.deepEqual(processTeardownPlan(17,'win32'),{command:'taskkill',args:['/PID','17','/T','/F']});
+  assert.throws(()=>processTeardownPlan(0,'linux'),/INVALID_PROCESS_PID/);
 });
