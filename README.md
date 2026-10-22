@@ -16,6 +16,10 @@ The proposed cohort integrity module, durable host-owned fsynced event journal p
 
 The uncommitted V4 source dossier extends the pilot with paired outcome contingency counts, source-specific Claude cache accounting, terminal-only Codex usage, POSIX directory-entry fsync, bounded journal lock-release retries and a **best-effort** process-tree kill. None substitutes for Node24 CI, Windows Job Objects, host network/filesystem isolation, a real hidden verifier, a hard provider budget or 60 authorized live runs. See [V4 concept](docs/CONCEPT-V4.md) and [task corpus](docs/TASK-CORPUS-V4.md).
 
+## Unreleased Gate B verifier groundwork
+
+Three **synthetic** TypeScript fixtures, a strict `mutation-testing-elements` JSON report parser, and regression tests are present on the Gate B development branch. An actual pinned Stryker mutation run and isolated host-authenticated verifier are **not yet proven**. See [Gate B offline verifier](docs/GATE-B-OFFLINE-VERIFIER.md).
+
 ## What works
 
 - Local task analysis through the interactive preview and the bounded JSON CLI.

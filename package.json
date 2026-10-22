@@ -7,7 +7,7 @@
     "node": ">=24.0.0"
   },
   "scripts": {
-    "test": "node --test observer.test.mjs inspector.test.mjs shadow-mode.test.mjs routing-policy.test.mjs codex-executor.test.mjs benchmark-gate.test.mjs auto-model-plan.test.mjs pilot-contract.test.mjs pilot-scope.test.mjs pilot-journal.test.mjs",
+    "test": "node --test observer.test.mjs inspector.test.mjs shadow-mode.test.mjs routing-policy.test.mjs codex-executor.test.mjs benchmark-gate.test.mjs auto-model-plan.test.mjs pilot-contract.test.mjs pilot-scope.test.mjs pilot-journal.test.mjs stryker-report.test.mjs fixtures/gate-b/task-01-simple/candidate.test.mjs fixtures/gate-b/task-02-edge/candidate.test.mjs fixtures/gate-b/task-03-branch/candidate.test.mjs",
     "check": "node ./node_modules/typescript/bin/tsc --noEmit -p tsconfig.json",
     "observe": "node cli.ts",
     "doctor": "node sj-dev-cli.ts doctor",
@@ -20,7 +20,8 @@
     "route": "node routing-cli.ts",
     "execute": "node codex-exec-cli.ts",
     "auto-plan": "node auto-model-cli.ts",
-    "auto-plan-demo": "node auto-model-demo.mjs"
+    "auto-plan-demo": "node auto-model-demo.mjs",
+    "test:gate-b:fixtures": "node --test fixtures/gate-b/task-01-simple/candidate.test.mjs fixtures/gate-b/task-02-edge/candidate.test.mjs fixtures/gate-b/task-03-branch/candidate.test.mjs"
   },
   "devDependencies": {
     "@types/node": "22.15.0",

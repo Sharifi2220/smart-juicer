@@ -40,3 +40,7 @@ Run full Node 24 Windows and Ubuntu GitHub CI and a disposable local Windows hos
 ## V4 reconciliation – 22 October 2026 (unreleased)
 
 See [CONCEPT-V4.md](CONCEPT-V4.md) and [TASK-CORPUS-V4.md](TASK-CORPUS-V4.md). New offline functionality: independent 2×2 outcome counts; non-additive OpenAI vs additive Claude cache accounting; Codex completed-turn usage only (failed/timeout may remain UNKNOWN); best-effort POSIX process-group/Windows `taskkill /T /F` teardown; POSIX directory-entry `fsync`; bounded Windows journal-lock release retries. The test corpus, external verifier, host Job Object/sandbox, hard billing cap, actual 60 runs and Node 24 Windows/Linux CI are **not** implemented or evidenced. No paid inference or auto-routing is allowed based on this local dossier alone.
+
+## Gate B offline verifier preparation (2026-10-22)
+
+Three public synthetic fixtures, a fail-closed parser for the official Stryker mutation JSON schema, and regression tests are documented in [GATE-B-OFFLINE-VERIFIER.md](GATE-B-OFFLINE-VERIFIER.md). These tests verify parsing and fixture logic, **not an actual Stryker run or authenticated hidden verifier**. GitHub/host readback and independent approval remain separate gates.
