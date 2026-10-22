@@ -32,6 +32,9 @@
     "codex-executor.ts",
     "codex-exec-cli.ts",
     "auto-model-plan.ts",
-    "auto-model-cli.ts"
+    "auto-model-cli.ts",
+    "pilot-contract.ts",
+    "pilot-scope.ts",
+    "pilot-journal.ts"
   ]
 }
